@@ -1,0 +1,233 @@
+{% extends 'base.html' %}
+
+{% block title %}Attendance Report - Attendance Management System{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Page Heading -->
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <h1 class="h3 mb-0 text-gray-800">
+            <i class="fas fa-file-alt me-2"></i>Attendance Report
+        </h1>
+        <a href="{% url 'attendance:attendance_history' %}" class="d-none d-sm-inline-block btn btn-sm btn-secondary shadow-sm">
+            <i class="fas fa-arrow-left fa-sm text-white-50 me-1"></i>Back to History
+        </a>
+    </div>
+
+    <!-- Filter Card -->
+    <div class="card shadow mb-4">
+        <div class="card-header py-3">
+            <h6 class="m-0 font-weight-bold text-primary">Generate Report</h6>
+        </div>
+        <div class="card-body">
+            <form method="GET" class="row g-3 align-items-end">
+                <div class="col-md-3">
+                    <label for="id_start_date" class="form-label">Start Date</label>
+                    <input type="date" name="start_date" id="id_start_date" class="form-control" value="{{ form.start_date.value|date:'Y-m-d' }}" required>
+                </div>
+                <div class="col-md-3">
+                    <label for="id_end_date" class="form-label">End Date</label>
+                    <input type="date" name="end_date" id="id_end_date" class="form-control" value="{{ form.end_date.value|date:'Y-m-d' }}" required>
+                </div>
+                {% if user.is_staff %}
+                <div class="col-md-3">
+                    <label for="id_user" class="form-label">Employee</label>
+                    <select name="user" id="id_user" class="form-select">
+                        <option value="">All Employees</option>
+                        {% for employee in employees %}
+                            <option value="{{ employee.id }}" {% if form.user.value|stringformat:'s' == employee.id|stringformat:'s' %}selected{% endif %}>
+                                {{ employee.get_full_name|default:employee.username }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                {% endif %}
+                <div class="col-md-3">
+                    <label for="id_report_type" class="form-label">Report Type</label>
+                    <select name="report_type" id="id_report_type" class="form-select">
+                        <option value="detailed" {% if form.report_type.value == 'detailed' %}selected{% endif %}>Detailed Report</option>
+                        <option value="summary" {% if form.report_type.value == 'summary' %}selected{% endif %}>Summary Report</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label for="id_format" class="form-label">Format</label>
+                    <select name="format" id="id_format" class="form-select">
+                        <option value="csv" {% if form.format.value == 'csv' %}selected{% endif %}>CSV</option>
+                        <option value="excel" {% if form.format.value == 'excel' %}selected{% endif %}>Excel</option>
+                        <option value="pdf" {% if form.format.value == 'pdf' %}selected{% endif %}>PDF</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="fas fa-file-download me-1"></i>Generate Report
+                    </button>
+                </div>
+                <div class="col-md-3">
+                    <button type="submit" name="preview" value="true" class="btn btn-secondary w-100">
+                        <i class="fas fa-eye me-1"></i>Preview Report
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    {% if preview %}
+    <!-- Report Preview Card -->
+    <div class="card shadow mb-4">
+        <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+            <h6 class="m-0 font-weight-bold text-primary">Report Preview</h6>
+            <div>
+                <a href="{{ download_url }}" class="btn btn-sm btn-success">
+                    <i class="fas fa-download me-1"></i>Download Report
+                </a>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-bordered" id="dataTable" width="100%" cellspacing="0">
+                    <thead>
+                        <tr>
+                            {% if form.report_type.value == 'detailed' %}
+                                <th>Date</th>
+                                {% if user.is_staff and not form.user.value %}
+                                <th>Employee</th>
+                                {% endif %}
+                                <th>Check-in</th>
+                                <th>Check-out</th>
+                                <th>Duration</th>
+                                <th>Type</th>
+                                <th>Status</th>
+                                <th>Notes</th>
+                            {% else %}
+                                {% if user.is_staff and not form.user.value %}
+                                <th>Employee</th>
+                                {% endif %}
+                                <th>Total Days</th>
+                                <th>Present Days</th>
+                                <th>Absent Days</th>
+                                <th>Late Arrivals</th>
+                                <th>Early Departures</th>
+                                <th>Total Hours</th>
+                                <th>Average Hours/Day</th>
+                            {% endif %}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% if form.report_type.value == 'detailed' %}
+                            {% for record in attendance_records %}
+                            <tr>
+                                <td>{{ record.date }}</td>
+                                {% if user.is_staff and not form.user.value %}
+                                <td>{{ record.user.get_full_name|default:record.user.username }}</td>
+                                {% endif %}
+                                <td>
+                                    {% if record.check_in_time %}
+                                        {{ record.check_in_time|time:"H:i:s" }}
+                                    {% else %}
+                                        --:--:--
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if record.check_out_time %}
+                                        {{ record.check_out_time|time:"H:i:s" }}
+                                    {% else %}
+                                        --:--:--
+                                    {% endif %}
+                                </td>
+                                <td>{{ record.get_duration }}</td>
+                                <td>
+                                    {% if record.attendance_type == 'regular' %}
+                                        <span class="badge bg-primary">Regular</span>
+                                    {% elif record.attendance_type == 'wfh' %}
+                                        <span class="badge bg-info">WFH</span>
+                                    {% elif record.attendance_type == 'business_trip' %}
+                                        <span class="badge bg-warning">Business Trip</span>
+                                    {% elif record.attendance_type == 'leave' %}
+                                        <span class="badge bg-secondary">Leave</span>
+                                    {% else %}
+                                        <span class="badge bg-dark">{{ record.attendance_type|title }}</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if record.is_present %}
+                                        <span class="badge bg-success">Present</span>
+                                    {% else %}
+                                        <span class="badge bg-danger">Absent</span>
+                                    {% endif %}
+                                </td>
+                                <td>{{ record.notes|default:"-" }}</td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="{% if user.is_staff and not form.user.value %}8{% else %}7{% endif %}" class="text-center">No records found for the selected criteria.</td>
+                            </tr>
+                            {% endfor %}
+                        {% else %}
+                            {% for summary in summary_data %}
+                            <tr>
+                                {% if user.is_staff and not form.user.value %}
+                                <td>{{ summary.user.get_full_name|default:summary.user.username }}</td>
+                                {% endif %}
+                                <td>{{ summary.total_days }}</td>
+                                <td>{{ summary.present_days }}</td>
+                                <td>{{ summary.absent_days }}</td>
+                                <td>{{ summary.late_arrivals }}</td>
+                                <td>{{ summary.early_departures }}</td>
+                                <td>{{ summary.total_hours }}</td>
+                                <td>{{ summary.avg_hours_per_day }}</td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="{% if user.is_staff and not form.user.value %}8{% else %}7{% endif %}" class="text-center">No records found for the selected criteria.</td>
+                            </tr>
+                            {% endfor %}
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Report Types Card -->
+    <div class="card shadow mb-4">
+        <div class="card-header py-3">
+            <h6 class="m-0 font-weight-bold text-primary">Available Report Types</h6>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6 mb-4">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <h5 class="card-title"><i class="fas fa-list me-2 text-primary"></i>Detailed Report</h5>
+                            <p class="card-text">Shows day-by-day attendance records including check-in/out times, duration, and status.</p>
+                            <ul class="list-group list-group-flush mb-3">
+                                <li class="list-group-item">Individual daily records</li>
+                                <li class="list-group-item">Check-in and check-out times</li>
+                                <li class="list-group-item">Attendance type and status</li>
+                                <li class="list-group-item">Working hours calculation</li>
+                            </ul>
+                            <p class="card-text text-muted">Best for: Detailed analysis of attendance patterns.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6 mb-4">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <h5 class="card-title"><i class="fas fa-chart-pie me-2 text-success"></i>Summary Report</h5>
+                            <p class="card-text">Provides an overview of attendance statistics for the selected period.</p>
+                            <ul class="list-group list-group-flush mb-3">
+                                <li class="list-group-item">Total present/absent days</li>
+                                <li class="list-group-item">Late arrivals and early departures</li>
+                                <li class="list-group-item">Total working hours</li>
+                                <li class="list-group-item">Average hours per working day</li>
+                            </ul>
+                            <p class="card-text text-muted">Best for: Quick overview and performance evaluation.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

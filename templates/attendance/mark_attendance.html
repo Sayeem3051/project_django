@@ -1,0 +1,252 @@
+{% extends 'base.html' %}
+
+{% block title %}Mark Attendance - Attendance Management System{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Page Heading -->
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <h1 class="h3 mb-0 text-gray-800">
+            <i class="fas fa-check-circle me-2"></i>Mark Attendance
+        </h1>
+        <a href="{% url 'attendance:attendance_home' %}" class="d-none d-sm-inline-block btn btn-sm btn-secondary shadow-sm">
+            <i class="fas fa-arrow-left fa-sm text-white-50 me-1"></i>Back to Attendance
+        </a>
+    </div>
+
+    <!-- Content Row -->
+    <div class="row">
+        <div class="col-lg-8 mx-auto">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">
+                        {% if action == 'check_in' %}
+                            Check In
+                        {% elif action == 'check_out' %}
+                            Check Out
+                        {% else %}
+                            Mark Attendance
+                        {% endif %}
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="text-center mb-4">
+                        <div class="mb-3">
+                            <i class="fas {% if action == 'check_in' %}fa-sign-in-alt{% elif action == 'check_out' %}fa-sign-out-alt{% else %}fa-clipboard-check{% endif %} fa-4x text-primary"></i>
+                        </div>
+                        <h4 class="font-weight-bold text-gray-800">
+                            {% if action == 'check_in' %}
+                                Ready to Check In?
+                            {% elif action == 'check_out' %}
+                                Ready to Check Out?
+                            {% else %}
+                                Mark Your Attendance
+                            {% endif %}
+                        </h4>
+                        <p class="text-gray-600">
+                            {% if action == 'check_in' %}
+                                You are about to check in for today ({{ today|date:"F d, Y" }}).
+                            {% elif action == 'check_out' %}
+                                You are about to check out for today ({{ today|date:"F d, Y" }}).
+                            {% else %}
+                                Select an action to mark your attendance for today ({{ today|date:"F d, Y" }}).
+                            {% endif %}
+                        </p>
+                    </div>
+
+                    <div class="row mb-4">
+                        <div class="col-md-6 mb-3 mb-md-0">
+                            <div class="card border-left-primary h-100">
+                                <div class="card-body">
+                                    <div class="text-center">
+                                        <h5 class="font-weight-bold">Current Date</h5>
+                                        <p class="lead">{{ today|date:"F d, Y" }}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card border-left-success h-100">
+                                <div class="card-body">
+                                    <div class="text-center">
+                                        <h5 class="font-weight-bold">Current Time</h5>
+                                        <p class="lead" id="current-time">Loading...</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <form method="POST">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="{% if action %}{{ action }}{% else %}check_in{% endif %}">
+                        
+                        {% if not action %}
+                        <div class="mb-4">
+                            <label class="form-label font-weight-bold">Select Action</label>
+                            <div class="d-flex justify-content-center gap-3">
+                                <div class="form-check form-check-inline">
+                                    <input class="form-check-input" type="radio" name="action" id="check_in" value="check_in" {% if attendance and not attendance.check_in_time %}checked{% elif not attendance %}checked{% endif %} {% if attendance and attendance.check_in_time %}disabled{% endif %}>
+                                    <label class="form-check-label" for="check_in">Check In</label>
+                                </div>
+                                <div class="form-check form-check-inline">
+                                    <input class="form-check-input" type="radio" name="action" id="check_out" value="check_out" {% if attendance and attendance.check_in_time and not attendance.check_out_time %}checked{% endif %} {% if not attendance or not attendance.check_in_time or attendance.check_out_time %}disabled{% endif %}>
+                                    <label class="form-check-label" for="check_out">Check Out</label>
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+
+                        <div class="mb-4">
+                            <label for="id_attendance_type" class="form-label font-weight-bold">Attendance Type</label>
+                            <select name="attendance_type" id="id_attendance_type" class="form-select" {% if attendance and attendance.check_out_time %}disabled{% endif %}>
+                                <option value="regular" {% if attendance and attendance.attendance_type == 'regular' %}selected{% endif %}>Regular Office</option>
+                                <option value="wfh" {% if attendance and attendance.attendance_type == 'wfh' %}selected{% endif %}>Work From Home</option>
+                                <option value="business_trip" {% if attendance and attendance.attendance_type == 'business_trip' %}selected{% endif %}>Business Trip</option>
+                                <option value="leave" {% if attendance and attendance.attendance_type == 'leave' %}selected{% endif %}>Leave</option>
+                            </select>
+                        </div>
+
+                        <div class="mb-4">
+                            <label for="id_notes" class="form-label font-weight-bold">Notes (Optional)</label>
+                            <textarea name="notes" id="id_notes" class="form-control" rows="3" placeholder="Add any notes or comments about your attendance">{% if attendance %}{{ attendance.notes }}{% endif %}</textarea>
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="form-label font-weight-bold">Verification Method</label>
+                            <div class="d-flex justify-content-center gap-3">
+                                <div class="form-check form-check-inline">
+                                    <input class="form-check-input" type="radio" name="verification_method" id="manual" value="manual" checked>
+                                    <label class="form-check-label" for="manual">Manual</label>
+                                </div>
+                                <div class="form-check form-check-inline">
+                                    <input class="form-check-input" type="radio" name="verification_method" id="face" value="face" {% if not user.profile.face_image %}disabled{% endif %}>
+                                    <label class="form-check-label" for="face">Face Recognition</label>
+                                </div>
+                                <div class="form-check form-check-inline">
+                                    <input class="form-check-input" type="radio" name="verification_method" id="fingerprint" value="fingerprint" {% if not user.profile.fingerprint_data %}disabled{% endif %}>
+                                    <label class="form-check-label" for="fingerprint">Fingerprint</label>
+                                </div>
+                            </div>
+                            {% if not user.profile.face_image or not user.profile.fingerprint_data %}
+                            <div class="form-text text-center mt-2">
+                                {% if not user.profile.face_image and not user.profile.fingerprint_data %}
+                                    Face image and fingerprint data not uploaded. <a href="{% url 'users:profile' %}">Upload now</a>.
+                                {% elif not user.profile.face_image %}
+                                    Face image not uploaded. <a href="{% url 'users:profile' %}">Upload now</a>.
+                                {% elif not user.profile.fingerprint_data %}
+                                    Fingerprint data not uploaded. <a href="{% url 'users:profile' %}">Upload now</a>.
+                                {% endif %}
+                            </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="verification-section" id="manual-section">
+                            <div class="alert alert-info">
+                                <i class="fas fa-info-circle me-2"></i>You are using manual verification. Click the button below to proceed.
+                            </div>
+                        </div>
+
+                        <div class="verification-section d-none" id="face-section">
+                            <div class="alert alert-info mb-3">
+                                <i class="fas fa-camera me-2"></i>Face recognition verification will be used. Please position your face in front of the camera.
+                            </div>
+                            <div class="text-center mb-3">
+                                <div id="camera-container" class="mx-auto" style="width: 320px; height: 240px; border: 1px solid #ddd; background-color: #f8f9fc; display: flex; align-items: center; justify-content: center;">
+                                    <span class="text-muted">Camera feed will appear here</span>
+                                </div>
+                                <button type="button" id="start-camera" class="btn btn-outline-primary mt-2">
+                                    <i class="fas fa-video me-1"></i>Start Camera
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="verification-section d-none" id="fingerprint-section">
+                            <div class="alert alert-info mb-3">
+                                <i class="fas fa-fingerprint me-2"></i>Fingerprint verification will be used. Please place your finger on the scanner.
+                            </div>
+                            <div class="text-center mb-3">
+                                <div id="fingerprint-container" class="mx-auto" style="width: 150px; height: 200px; border: 1px solid #ddd; background-color: #f8f9fc; display: flex; align-items: center; justify-content: center;">
+                                    <i class="fas fa-fingerprint fa-4x text-gray-300"></i>
+                                </div>
+                                <button type="button" id="scan-fingerprint" class="btn btn-outline-primary mt-2">
+                                    <i class="fas fa-fingerprint me-1"></i>Scan Fingerprint
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-center mt-4">
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                {% if action == 'check_in' %}
+                                    <i class="fas fa-sign-in-alt me-1"></i>Check In
+                                {% elif action == 'check_out' %}
+                                    <i class="fas fa-sign-out-alt me-1"></i>Check Out
+                                {% else %}
+                                    <i class="fas fa-check-circle me-1"></i>Submit
+                                {% endif %}
+                            </button>
+                            <a href="{% url 'attendance:attendance_home' %}" class="btn btn-secondary btn-lg">
+                                <i class="fas fa-times-circle me-1"></i>Cancel
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% block extra_js %}
+<script>
+    // Update current time
+    function updateCurrentTime() {
+        const now = new Date();
+        const timeString = now.toLocaleTimeString();
+        document.getElementById('current-time').textContent = timeString;
+    }
+    
+    // Update time every second
+    updateCurrentTime();
+    setInterval(updateCurrentTime, 1000);
+
+    // Verification method switching
+    document.addEventListener('DOMContentLoaded', function() {
+        const verificationMethods = document.querySelectorAll('input[name="verification_method"]');
+        const verificationSections = document.querySelectorAll('.verification-section');
+        
+        verificationMethods.forEach(method => {
+            method.addEventListener('change', function() {
+                // Hide all sections
+                verificationSections.forEach(section => {
+                    section.classList.add('d-none');
+                });
+                
+                // Show selected section
+                const selectedSection = document.getElementById(`${this.value}-section`);
+                if (selectedSection) {
+                    selectedSection.classList.remove('d-none');
+                }
+            });
+        });
+
+        // Camera functionality (placeholder - would need actual implementation)
+        const startCameraBtn = document.getElementById('start-camera');
+        if (startCameraBtn) {
+            startCameraBtn.addEventListener('click', function() {
+                const cameraContainer = document.getElementById('camera-container');
+                cameraContainer.innerHTML = '<div class="alert alert-warning">Camera access is not implemented in this demo.</div>';
+            });
+        }
+
+        // Fingerprint functionality (placeholder - would need actual implementation)
+        const scanFingerprintBtn = document.getElementById('scan-fingerprint');
+        if (scanFingerprintBtn) {
+            scanFingerprintBtn.addEventListener('click', function() {
+                const fingerprintContainer = document.getElementById('fingerprint-container');
+                fingerprintContainer.innerHTML = '<div class="alert alert-warning">Fingerprint scanning is not implemented in this demo.</div>';
+            });
+        }
+    });
+</script>
+{% endblock %}
+{% endblock %}

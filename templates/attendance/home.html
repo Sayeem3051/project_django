@@ -1,0 +1,264 @@
+{% extends 'base.html' %}
+
+{% block title %}Attendance - Attendance Management System{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Page Heading -->
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <h1 class="h3 mb-0 text-gray-800">
+            <i class="fas fa-clipboard-list me-2"></i>Today's Attendance
+        </h1>
+        <div>
+            <a href="{% url 'attendance:mark_attendance' %}" class="d-none d-sm-inline-block btn btn-sm btn-primary shadow-sm me-2">
+                <i class="fas fa-check-circle fa-sm text-white-50 me-1"></i>Mark Attendance
+            </a>
+            <a href="{% url 'attendance:attendance_history' %}" class="d-none d-sm-inline-block btn btn-sm btn-secondary shadow-sm">
+                <i class="fas fa-history fa-sm text-white-50 me-1"></i>View History
+            </a>
+        </div>
+    </div>
+
+    <!-- Content Row -->
+    <div class="row">
+        <!-- Today's Date Card -->
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-primary shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">Today's Date</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ today|date:"F d, Y" }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-calendar fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Current Time Card -->
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-success shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">Current Time</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800" id="current-time">Loading...</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-clock fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Attendance Status Card -->
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-info shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-info text-uppercase mb-1">Your Status</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                {% if attendance %}
+                                    {% if attendance.check_in_time and attendance.check_out_time %}
+                                        <span class="text-success">Checked Out</span>
+                                    {% elif attendance.check_in_time %}
+                                        <span class="text-warning">Checked In</span>
+                                    {% else %}
+                                        <span class="text-danger">Not Marked</span>
+                                    {% endif %}
+                                {% else %}
+                                    <span class="text-danger">Not Marked</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-user-check fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Working Hours Card -->
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-warning shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">Working Hours</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                {% if attendance and attendance.check_in_time and attendance.check_out_time %}
+                                    {{ attendance.get_duration }}
+                                {% elif attendance and attendance.check_in_time %}
+                                    <span id="ongoing-hours">Calculating...</span>
+                                {% else %}
+                                    N/A
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-business-time fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Attendance Details Card -->
+    <div class="card shadow mb-4">
+        <div class="card-header py-3">
+            <h6 class="m-0 font-weight-bold text-primary">Today's Attendance Details</h6>
+        </div>
+        <div class="card-body">
+            {% if attendance %}
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-4">
+                            <h5 class="font-weight-bold">Check-in Time:</h5>
+                            <p class="lead">
+                                {% if attendance.check_in_time %}
+                                    {{ attendance.check_in_time|time:"H:i:s" }}
+                                {% else %}
+                                    <span class="text-muted">Not checked in yet</span>
+                                {% endif %}
+                            </p>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-4">
+                            <h5 class="font-weight-bold">Check-out Time:</h5>
+                            <p class="lead">
+                                {% if attendance.check_out_time %}
+                                    {{ attendance.check_out_time|time:"H:i:s" }}
+                                {% else %}
+                                    <span class="text-muted">Not checked out yet</span>
+                                {% endif %}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-4">
+                            <h5 class="font-weight-bold">Attendance Type:</h5>
+                            <p class="lead">
+                                {% if attendance.attendance_type == 'regular' %}
+                                    <span class="badge bg-primary">Regular</span>
+                                {% elif attendance.attendance_type == 'wfh' %}
+                                    <span class="badge bg-info">Work From Home</span>
+                                {% elif attendance.attendance_type == 'business_trip' %}
+                                    <span class="badge bg-warning">Business Trip</span>
+                                {% elif attendance.attendance_type == 'leave' %}
+                                    <span class="badge bg-secondary">Leave</span>
+                                {% else %}
+                                    <span class="badge bg-dark">{{ attendance.attendance_type|title }}</span>
+                                {% endif %}
+                            </p>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-4">
+                            <h5 class="font-weight-bold">Status:</h5>
+                            <p class="lead">
+                                {% if attendance.is_present %}
+                                    <span class="badge bg-success">Present</span>
+                                {% else %}
+                                    <span class="badge bg-danger">Absent</span>
+                                {% endif %}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                {% if attendance.notes %}
+                <div class="row">
+                    <div class="col-12">
+                        <div class="mb-4">
+                            <h5 class="font-weight-bold">Notes:</h5>
+                            <p>{{ attendance.notes }}</p>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+                <div class="row">
+                    <div class="col-12">
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-center">
+                            {% if not attendance.check_in_time %}
+                                <a href="{% url 'attendance:mark_attendance' %}?action=check_in" class="btn btn-success">
+                                    <i class="fas fa-sign-in-alt me-1"></i>Check In
+                                </a>
+                            {% elif not attendance.check_out_time %}
+                                <a href="{% url 'attendance:mark_attendance' %}?action=check_out" class="btn btn-danger">
+                                    <i class="fas fa-sign-out-alt me-1"></i>Check Out
+                                </a>
+                            {% else %}
+                                <button class="btn btn-secondary" disabled>
+                                    <i class="fas fa-check-circle me-1"></i>Attendance Completed
+                                </button>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            {% else %}
+                <div class="text-center py-5">
+                    <div class="mb-4">
+                        <i class="fas fa-clipboard-list fa-4x text-gray-300 mb-3"></i>
+                        <h4 class="text-gray-800">No attendance record for today</h4>
+                        <p class="text-gray-600">You haven't marked your attendance for today yet.</p>
+                    </div>
+                    <a href="{% url 'attendance:mark_attendance' %}" class="btn btn-primary">
+                        <i class="fas fa-check-circle me-1"></i>Mark Attendance Now
+                    </a>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+{% block extra_js %}
+<script>
+    // Update current time
+    function updateCurrentTime() {
+        const now = new Date();
+        const timeString = now.toLocaleTimeString();
+        document.getElementById('current-time').textContent = timeString;
+        
+        // If checked in but not checked out, update ongoing hours
+        const ongoingHoursElement = document.getElementById('ongoing-hours');
+        if (ongoingHoursElement) {
+            if (attendance && attendance.check_in_time && attendance.check_out_time == None) {
+                try {
+                    const checkInTime = new Date('{{ attendance.check_in_time|date:"c" }}');
+                    const timeDiff = now.getTime() - checkInTime.getTime();
+                    const totalSeconds = Math.max(0, Math.floor(timeDiff / 1000));
+                    
+                    const hours = Math.floor(totalSeconds / 3600);
+                    const minutes = Math.floor((totalSeconds % 3600) / 60);
+                    const seconds = totalSeconds % 60;
+                    
+                    const formattedTime = [
+                        hours.toString().padStart(2, '0'),
+                        minutes.toString().padStart(2, '0'),
+                        seconds.toString().padStart(2, '0')
+                    ].join(':');
+                    
+                    ongoingHoursElement.textContent = formattedTime;
+                } catch (error) {
+                    console.error('Error calculating ongoing hours:', error);
+                    ongoingHoursElement.textContent = 'Error calculating time';
+                }
+            }
+            }
+        }
+    
+    // Update time every second
+    updateCurrentTime();
+    setInterval(updateCurrentTime, 1000);
+</script>
+{% endblock %}
+{% endblock %}

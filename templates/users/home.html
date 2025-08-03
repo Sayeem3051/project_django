@@ -1,0 +1,60 @@
+{% extends 'base.html' %}
+
+{% block title %}Home - Attendance Management System{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center align-items-center" style="min-height: 80vh;">
+        <div class="col-md-6 text-center">
+            <div class="card shadow-lg border-0 rounded-lg">
+                <div class="card-body p-5">
+                    <h1 class="display-4 mb-4 text-primary">
+                        <i class="fas fa-fingerprint me-3"></i>Attendance System
+                    </h1>
+                    <p class="lead mb-5">A modern face and fingerprint-based attendance management system</p>
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-center">
+                        <a href="{% url 'users:login' %}" class="btn btn-primary btn-lg px-4 me-md-2">
+                            <i class="fas fa-sign-in-alt me-2"></i>Login
+                        </a>
+                        <a href="{% url 'users:register' %}" class="btn btn-outline-primary btn-lg px-4">
+                            <i class="fas fa-user-plus me-2"></i>Register
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container my-5">
+    <div class="row">
+        <div class="col-md-4 mb-4">
+            <div class="card h-100 shadow-sm">
+                <div class="card-body text-center">
+                    <i class="fas fa-camera fa-3x text-primary mb-3"></i>
+                    <h3 class="card-title">Face Recognition</h3>
+                    <p class="card-text">Mark your attendance using facial recognition technology for secure and contactless verification.</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 mb-4">
+            <div class="card h-100 shadow-sm">
+                <div class="card-body text-center">
+                    <i class="fas fa-fingerprint fa-3x text-primary mb-3"></i>
+                    <h3 class="card-title">Fingerprint Scanning</h3>
+                    <p class="card-text">Use fingerprint authentication for quick and reliable attendance marking.</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 mb-4">
+            <div class="card h-100 shadow-sm">
+                <div class="card-body text-center">
+                    <i class="fas fa-chart-bar fa-3x text-primary mb-3"></i>
+                    <h3 class="card-title">Detailed Reports</h3>
+                    <p class="card-text">Access comprehensive attendance reports and analytics for better management.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

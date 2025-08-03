@@ -1,0 +1,157 @@
+{% extends 'base.html' %}
+
+{% block title %}Profile - Attendance Management System{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Page Heading -->
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <h1 class="h3 mb-0 text-gray-800">
+            <i class="fas fa-user-circle me-2"></i>Profile
+        </h1>
+    </div>
+
+    <div class="row">
+        <!-- Profile Information Card -->
+        <div class="col-lg-4">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Profile Information</h6>
+                </div>
+                <div class="card-body">
+                    <div class="text-center mb-4">
+                        {% if user.profile.face_image %}
+                            <img class="img-profile rounded-circle mb-3" src="{{ user.profile.face_image.url }}" width="150" height="150" alt="Profile Image">
+                        {% else %}
+                            <div class="mb-3 rounded-circle bg-primary d-flex align-items-center justify-content-center mx-auto" style="width: 150px; height: 150px;">
+                                <span class="text-white font-weight-bold" style="font-size: 3rem;">{{ user.first_name|first }}{{ user.last_name|first }}</span>
+                            </div>
+                        {% endif %}
+                        <h4 class="font-weight-bold">{{ user.get_full_name }}</h4>
+                        <p class="text-muted">{{ user.profile.position }} - {{ user.profile.department }}</p>
+                    </div>
+                    <div class="mb-3">
+                        <h6 class="font-weight-bold">Employee ID:</h6>
+                        <p>{{ user.profile.employee_id|default:"Not set" }}</p>
+                    </div>
+                    <div class="mb-3">
+                        <h6 class="font-weight-bold">Email:</h6>
+                        <p>{{ user.email }}</p>
+                    </div>
+                    <div class="mb-3">
+                        <h6 class="font-weight-bold">Phone Number:</h6>
+                        <p>{{ user.profile.phone_number|default:"Not set" }}</p>
+                    </div>
+                    <div class="mb-3">
+                        <h6 class="font-weight-bold">Joined Date:</h6>
+                        <p>{{ user.date_joined|date:"F d, Y" }}</p>
+                    </div>
+                    <div class="mb-3">
+                        <h6 class="font-weight-bold">Biometric Data:</h6>
+                        <p>
+                            Face Image: {% if user.profile.face_image %}<span class="text-success">Uploaded</span>{% else %}<span class="text-danger">Not Uploaded</span>{% endif %}<br>
+                            Fingerprint: {% if user.profile.fingerprint_data %}<span class="text-success">Uploaded</span>{% else %}<span class="text-danger">Not Uploaded</span>{% endif %}
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Update Profile Card -->
+        <div class="col-lg-8">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Update Profile</h6>
+                </div>
+                <div class="card-body">
+                    <form method="POST" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        <div class="row">
+                            <!-- User Form Fields -->
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ u_form.first_name.id_for_label }}" class="form-label">First Name</label>
+                                {{ u_form.first_name }}
+                                {% if u_form.first_name.errors %}
+                                    <div class="text-danger small mt-1">{{ u_form.first_name.errors }}</div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ u_form.last_name.id_for_label }}" class="form-label">Last Name</label>
+                                {{ u_form.last_name }}
+                                {% if u_form.last_name.errors %}
+                                    <div class="text-danger small mt-1">{{ u_form.last_name.errors }}</div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ u_form.username.id_for_label }}" class="form-label">Username</label>
+                                {{ u_form.username }}
+                                {% if u_form.username.errors %}
+                                    <div class="text-danger small mt-1">{{ u_form.username.errors }}</div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ u_form.email.id_for_label }}" class="form-label">Email</label>
+                                {{ u_form.email }}
+                                {% if u_form.email.errors %}
+                                    <div class="text-danger small mt-1">{{ u_form.email.errors }}</div>
+                                {% endif %}
+                            </div>
+
+                            <!-- Profile Form Fields -->
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ p_form.employee_id.id_for_label }}" class="form-label">Employee ID</label>
+                                {{ p_form.employee_id }}
+                                {% if p_form.employee_id.errors %}
+                                    <div class="text-danger small mt-1">{{ p_form.employee_id.errors }}</div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ p_form.phone_number.id_for_label }}" class="form-label">Phone Number</label>
+                                {{ p_form.phone_number }}
+                                {% if p_form.phone_number.errors %}
+                                    <div class="text-danger small mt-1">{{ p_form.phone_number.errors }}</div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ p_form.department.id_for_label }}" class="form-label">Department</label>
+                                {{ p_form.department }}
+                                {% if p_form.department.errors %}
+                                    <div class="text-danger small mt-1">{{ p_form.department.errors }}</div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ p_form.position.id_for_label }}" class="form-label">Position</label>
+                                {{ p_form.position }}
+                                {% if p_form.position.errors %}
+                                    <div class="text-danger small mt-1">{{ p_form.position.errors }}</div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ p_form.face_image.id_for_label }}" class="form-label">Face Image</label>
+                                {{ p_form.face_image }}
+                                {% if p_form.face_image.errors %}
+                                    <div class="text-danger small mt-1">{{ p_form.face_image.errors }}</div>
+                                {% endif %}
+                                <div class="form-text">Upload a clear front-facing photo for face recognition.</div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ p_form.fingerprint_data.id_for_label }}" class="form-label">Fingerprint Data</label>
+                                {{ p_form.fingerprint_data }}
+                                {% if p_form.fingerprint_data.errors %}
+                                    <div class="text-danger small mt-1">{{ p_form.fingerprint_data.errors }}</div>
+                                {% endif %}
+                                <div class="form-text">Upload fingerprint data file if available.</div>
+                            </div>
+                        </div>
+                        <div class="mt-3">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save me-1"></i>Save Changes
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

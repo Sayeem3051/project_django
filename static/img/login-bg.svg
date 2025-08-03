@@ -1,0 +1,55 @@
+<svg width="800" height="600" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background gradient -->
+  <defs>
+    <linearGradient id="bg-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#4e73df" />
+      <stop offset="100%" stop-color="#224abe" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Background rectangle -->
+  <rect width="800" height="600" fill="url(#bg-gradient)" />
+  
+  <!-- Abstract shapes -->
+  <circle cx="200" cy="150" r="80" fill="rgba(255,255,255,0.1)" />
+  <circle cx="600" cy="450" r="100" fill="rgba(255,255,255,0.1)" />
+  
+  <!-- Decorative elements -->
+  <path d="M0,300 Q200,200 400,300 T800,300" stroke="rgba(255,255,255,0.2)" stroke-width="5" fill="none" />
+  
+  <!-- Clock icon representing attendance -->
+  <circle cx="400" cy="250" r="100" fill="rgba(255,255,255,0.2)" stroke="white" stroke-width="4" />
+  <line x1="400" y1="250" x2="400" y2="180" stroke="white" stroke-width="4" stroke-linecap="round" />
+  <line x1="400" y1="250" x2="450" y2="250" stroke="white" stroke-width="4" stroke-linecap="round" />
+  
+  <!-- Fingerprint pattern -->
+  <path d="M600,150 C620,130 650,130 670,150 S690,190 670,210 S630,230 610,210 S580,170 600,150" 
+        stroke="rgba(255,255,255,0.5)" stroke-width="3" fill="none" />
+  <path d="M605,160 C620,145 645,145 660,160 S675,190 660,205 S625,220 610,205 S590,175 605,160" 
+        stroke="rgba(255,255,255,0.5)" stroke-width="2" fill="none" />
+  <path d="M610,170 C620,160 640,160 650,170 S660,190 650,200 S620,210 610,200 S600,180 610,170" 
+        stroke="rgba(255,255,255,0.5)" stroke-width="2" fill="none" />
+  
+  <!-- Face recognition outline -->
+  <ellipse cx="200" cy="400" rx="70" ry="90" stroke="rgba(255,255,255,0.5)" stroke-width="3" fill="none" />
+  <circle cx="175" cy="375" r="10" fill="rgba(255,255,255,0.5)" />
+  <circle cx="225" cy="375" r="10" fill="rgba(255,255,255,0.5)" />
+  <path d="M170,425 Q200,445 230,425" stroke="rgba(255,255,255,0.5)" stroke-width="3" fill="none" />
+  
+  <!-- Grid pattern -->
+  <g stroke="rgba(255,255,255,0.1)" stroke-width="1">
+    <line x1="0" y1="100" x2="800" y2="100" />
+    <line x1="0" y1="200" x2="800" y2="200" />
+    <line x1="0" y1="300" x2="800" y2="300" />
+    <line x1="0" y1="400" x2="800" y2="400" />
+    <line x1="0" y1="500" x2="800" y2="500" />
+    
+    <line x1="100" y1="0" x2="100" y2="600" />
+    <line x1="200" y1="0" x2="200" y2="600" />
+    <line x1="300" y1="0" x2="300" y2="600" />
+    <line x1="400" y1="0" x2="400" y2="600" />
+    <line x1="500" y1="0" x2="500" y2="600" />
+    <line x1="600" y1="0" x2="600" y2="600" />
+    <line x1="700" y1="0" x2="700" y2="600" />
+  </g>
+</svg>

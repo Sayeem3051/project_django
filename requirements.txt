@@ -1,0 +1,29 @@
+# Core dependencies
+Django==5.2.4
+Pillow==10.2.0  # For image processing (face images)
+
+# Development tools
+django-debug-toolbar==4.3.0
+
+# Production dependencies
+gunicorn==21.2.0  # WSGI HTTP Server
+whitenoise==6.6.0  # Static files serving
+
+# Security
+django-cors-headers==4.3.1
+python-dotenv==1.0.1  # Environment variable management
+
+# Date and time handling
+pytz==2024.1
+
+# Optional - for PostgreSQL database
+# psycopg2-binary==2.9.9
+
+# Optional - for MySQL database
+# mysqlclient==2.2.1
+
+# Optional - for Excel export functionality
+# openpyxl==3.1.2
+
+# Optional - for PDF export functionality
+# reportlab==4.0.9

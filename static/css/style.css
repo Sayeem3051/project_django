@@ -1,0 +1,304 @@
+/* Custom styles for Attendance Management System */
+
+/* Sidebar customization */
+.sidebar {
+    background: linear-gradient(180deg, #4e73df 10%, #224abe 100%);
+    background-size: cover;
+}
+
+.sidebar-brand-icon i {
+    font-size: 2rem;
+}
+
+.sidebar-brand-text {
+    text-transform: uppercase;
+    font-weight: 800;
+    letter-spacing: 0.05rem;
+}
+
+/* Card customization */
+.card {
+    border: none;
+    box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15);
+}
+
+.card .card-header {
+    background-color: #f8f9fc;
+    border-bottom: 1px solid #e3e6f0;
+}
+
+.border-left-primary {
+    border-left: 0.25rem solid #4e73df !important;
+}
+
+.border-left-success {
+    border-left: 0.25rem solid #1cc88a !important;
+}
+
+.border-left-info {
+    border-left: 0.25rem solid #36b9cc !important;
+}
+
+.border-left-warning {
+    border-left: 0.25rem solid #f6c23e !important;
+}
+
+.border-left-danger {
+    border-left: 0.25rem solid #e74a3b !important;
+}
+
+/* Button customization */
+.btn-primary {
+    background-color: #4e73df;
+    border-color: #4e73df;
+}
+
+.btn-primary:hover {
+    background-color: #2e59d9;
+    border-color: #2653d4;
+}
+
+.btn-success {
+    background-color: #1cc88a;
+    border-color: #1cc88a;
+}
+
+.btn-success:hover {
+    background-color: #17a673;
+    border-color: #169b6b;
+}
+
+/* Login and Register pages */
+.bg-login-image {
+    background: url('/static/img/login-bg.jpg');
+    background-position: center;
+    background-size: cover;
+}
+
+.bg-register-image {
+    background: url('/static/img/register-bg.jpg');
+    background-position: center;
+    background-size: cover;
+}
+
+.form-control-user {
+    border-radius: 10rem;
+    padding: 1.5rem 1rem;
+}
+
+.btn-user {
+    border-radius: 10rem;
+    padding: 0.75rem 1rem;
+}
+
+/* Dashboard customization */
+.text-xs {
+    font-size: .7rem;
+}
+
+.text-primary {
+    color: #4e73df !important;
+}
+
+.text-success {
+    color: #1cc88a !important;
+}
+
+.text-info {
+    color: #36b9cc !important;
+}
+
+.text-warning {
+    color: #f6c23e !important;
+}
+
+.text-danger {
+    color: #e74a3b !important;
+}
+
+/* Profile page */
+.img-profile {
+    height: 150px;
+    width: 150px;
+    object-fit: cover;
+}
+
+/* Attendance marking page */
+.verification-section {
+    margin-bottom: 1.5rem;
+    padding: 1rem;
+    border-radius: 0.35rem;
+    background-color: #f8f9fc;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .sidebar {
+        width: 6.5rem !important;
+    }
+    
+    .sidebar .nav-item .nav-link {
+        width: 6.5rem;
+        text-align: center;
+        padding: 0.75rem 1rem;
+    }
+    
+    .sidebar .nav-item .nav-link span {
+        font-size: 0.65rem;
+        display: block;
+    }
+    
+    .sidebar .nav-item .nav-link i {
+        margin-right: 0;
+        font-size: 1rem;
+    }
+    
+    .sidebar .nav-item .collapse {
+        position: absolute;
+        left: calc(6.5rem + 1.5rem / 2);
+        z-index: 1;
+        top: 2px;
+        animation-name: growIn;
+        animation-duration: 200ms;
+        animation-timing-function: transform cubic-bezier(0.18, 1.25, 0.4, 1), opacity cubic-bezier(0, 1, 0.4, 1);
+    }
+    
+    .sidebar .nav-item .collapse .collapse-inner {
+        box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15);
+        border-radius: 0.35rem;
+    }
+    
+    .sidebar .nav-item .collapsing {
+        display: none;
+        transition: none;
+    }
+}
+
+/* Custom animations */
+@keyframes growIn {
+    0% {
+        transform: scale(0.9);
+        opacity: 0;
+    }
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+/* Badge customization */
+.badge {
+    display: inline-block;
+    padding: 0.25em 0.4em;
+    font-size: 75%;
+    font-weight: 700;
+    line-height: 1;
+    text-align: center;
+    white-space: nowrap;
+    vertical-align: baseline;
+    border-radius: 0.35rem;
+}
+
+.bg-primary {
+    background-color: #4e73df !important;
+}
+
+.bg-success {
+    background-color: #1cc88a !important;
+}
+
+.bg-info {
+    background-color: #36b9cc !important;
+}
+
+.bg-warning {
+    background-color: #f6c23e !important;
+}
+
+.bg-danger {
+    background-color: #e74a3b !important;
+}
+
+.bg-secondary {
+    background-color: #858796 !important;
+}
+
+.bg-dark {
+    background-color: #5a5c69 !important;
+}
+
+/* Table customization */
+.table-bordered {
+    border: 1px solid #e3e6f0;
+}
+
+.table-bordered th,
+.table-bordered td {
+    border: 1px solid #e3e6f0;
+}
+
+.table-hover tbody tr:hover {
+    background-color: rgba(78, 115, 223, 0.05);
+}
+
+/* Pagination customization */
+.pagination {
+    display: flex;
+    padding-left: 0;
+    list-style: none;
+    border-radius: 0.35rem;
+}
+
+.page-link {
+    position: relative;
+    display: block;
+    padding: 0.5rem 0.75rem;
+    margin-left: -1px;
+    line-height: 1.25;
+    color: #4e73df;
+    background-color: #fff;
+    border: 1px solid #dddfeb;
+}
+
+.page-link:hover {
+    z-index: 2;
+    color: #224abe;
+    text-decoration: none;
+    background-color: #eaecf4;
+    border-color: #dddfeb;
+}
+
+.page-item.active .page-link {
+    z-index: 3;
+    color: #fff;
+    background-color: #4e73df;
+    border-color: #4e73df;
+}
+
+/* Home page customization */
+.feature-box {
+    padding: 2rem;
+    border-radius: 0.5rem;
+    background-color: #f8f9fc;
+    transition: all 0.3s ease;
+    height: 100%;
+}
+
+.feature-box:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+}
+
+.feature-icon {
+    font-size: 2.5rem;
+    margin-bottom: 1rem;
+    color: #4e73df;
+}
+
+/* Footer customization */
+.sticky-footer {
+    padding: 2rem 0;
+    flex-shrink: 0;
+    background-color: #f8f9fc;
+    border-top: 1px solid #e3e6f0;
+}

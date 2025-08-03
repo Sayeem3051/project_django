@@ -1,0 +1,223 @@
+{% extends 'base.html' %}
+
+{% block title %}Attendance History - Attendance Management System{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Page Heading -->
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <h1 class="h3 mb-0 text-gray-800">
+            <i class="fas fa-history me-2"></i>Attendance History
+        </h1>
+        <div>
+            <a href="{% url 'attendance:attendance_report' %}" class="d-none d-sm-inline-block btn btn-sm btn-success shadow-sm me-2">
+                <i class="fas fa-download fa-sm text-white-50 me-1"></i>Export Report
+            </a>
+            <a href="{% url 'attendance:mark_attendance' %}" class="d-none d-sm-inline-block btn btn-sm btn-primary shadow-sm">
+                <i class="fas fa-check-circle fa-sm text-white-50 me-1"></i>Mark Attendance
+            </a>
+        </div>
+    </div>
+
+    <!-- Filter Card -->
+    <div class="card shadow mb-4">
+        <div class="card-header py-3">
+            <h6 class="m-0 font-weight-bold text-primary">Filter Attendance Records</h6>
+        </div>
+        <div class="card-body">
+            <form method="GET" class="row g-3 align-items-end">
+                <div class="col-md-3">
+                    <label for="id_start_date" class="form-label">Start Date</label>
+                    <input type="date" name="start_date" id="id_start_date" class="form-control" value="{{ form.start_date.value|date:'Y-m-d' }}">
+                </div>
+                <div class="col-md-3">
+                    <label for="id_end_date" class="form-label">End Date</label>
+                    <input type="date" name="end_date" id="id_end_date" class="form-control" value="{{ form.end_date.value|date:'Y-m-d' }}">
+                </div>
+                {% if user.is_staff %}
+                <div class="col-md-3">
+                    <label for="id_user" class="form-label">Employee</label>
+                    <select name="user" id="id_user" class="form-select">
+                        <option value="">All Employees</option>
+                        {% for employee in employees %}
+                            <option value="{{ employee.id }}" {% if form.user.value|stringformat:'s' == employee.id|stringformat:'s' %}selected{% endif %}>
+                                {{ employee.get_full_name|default:employee.username }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                {% endif %}
+                <div class="col-md-3">
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="fas fa-filter me-1"></i>Apply Filter
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Attendance Records Card -->
+    <div class="card shadow mb-4">
+        <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+            <h6 class="m-0 font-weight-bold text-primary">Attendance Records</h6>
+            <div class="dropdown no-arrow">
+                <a class="dropdown-toggle" href="#" role="button" id="dropdownMenuLink" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                    <i class="fas fa-ellipsis-v fa-sm fa-fw text-gray-400"></i>
+                </a>
+                <div class="dropdown-menu dropdown-menu-right shadow animated--fade-in" aria-labelledby="dropdownMenuLink">
+                    <div class="dropdown-header">View Options:</div>
+                    <a class="dropdown-item" href="?view=calendar">Calendar View</a>
+                    <a class="dropdown-item" href="?view=list">List View</a>
+                    <div class="dropdown-divider"></div>
+                    <a class="dropdown-item" href="{% url 'attendance:attendance_report' %}">Export to CSV</a>
+                </div>
+            </div>
+        </div>
+        <div class="card-body">
+            {% if attendance_records %}
+                <div class="table-responsive">
+                    <table class="table table-bordered" id="dataTable" width="100%" cellspacing="0">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                {% if user.is_staff and form.user.value == '' %}
+                                <th>Employee</th>
+                                {% endif %}
+                                <th>Check-in</th>
+                                <th>Check-out</th>
+                                <th>Duration</th>
+                                <th>Type</th>
+                                <th>Status</th>
+                                <th>Notes</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for record in attendance_records %}
+                            <tr>
+                                <td>{{ record.date }}</td>
+                                {% if user.is_staff and form.user.value == '' %}
+                                <td>{{ record.user.get_full_name|default:record.user.username }}</td>
+                                {% endif %}
+                                <td>
+                                    {% if record.check_in_time %}
+                                        {{ record.check_in_time|time:"H:i:s" }}
+                                    {% else %}
+                                        --:--:--
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if record.check_out_time %}
+                                        {{ record.check_out_time|time:"H:i:s" }}
+                                    {% else %}
+                                        --:--:--
+                                    {% endif %}
+                                </td>
+                                <td>{{ record.get_duration }}</td>
+                                <td>
+                                    {% if record.attendance_type == 'regular' %}
+                                        <span class="badge bg-primary">Regular</span>
+                                    {% elif record.attendance_type == 'wfh' %}
+                                        <span class="badge bg-info">WFH</span>
+                                    {% elif record.attendance_type == 'business_trip' %}
+                                        <span class="badge bg-warning">Business Trip</span>
+                                    {% elif record.attendance_type == 'leave' %}
+                                        <span class="badge bg-secondary">Leave</span>
+                                    {% else %}
+                                        <span class="badge bg-dark">{{ record.attendance_type|title }}</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if record.is_present %}
+                                        <span class="badge bg-success">Present</span>
+                                    {% else %}
+                                        <span class="badge bg-danger">Absent</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if record.notes %}
+                                        <button type="button" class="btn btn-sm btn-outline-info" data-bs-toggle="tooltip" data-bs-placement="top" title="{{ record.notes }}">
+                                            <i class="fas fa-sticky-note"></i>
+                                        </button>
+                                    {% else %}
+                                        <span class="text-muted">-</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                
+                <!-- Pagination -->
+                {% if attendance_records.has_other_pages %}
+                <div class="d-flex justify-content-center mt-4">
+                    <nav aria-label="Page navigation">
+                        <ul class="pagination">
+                            {% if attendance_records.has_previous %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page=1{% if form.start_date.value %}&start_date={{ form.start_date.value|date:'Y-m-d' }}{% endif %}{% if form.end_date.value %}&end_date={{ form.end_date.value|date:'Y-m-d' }}{% endif %}{% if form.user.value %}&user={{ form.user.value }}{% endif %}" aria-label="First">
+                                    <span aria-hidden="true">&laquo;&laquo;</span>
+                                </a>
+                            </li>
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ attendance_records.previous_page_number }}{% if form.start_date.value %}&start_date={{ form.start_date.value|date:'Y-m-d' }}{% endif %}{% if form.end_date.value %}&end_date={{ form.end_date.value|date:'Y-m-d' }}{% endif %}{% if form.user.value %}&user={{ form.user.value }}{% endif %}" aria-label="Previous">
+                                    <span aria-hidden="true">&laquo;</span>
+                                </a>
+                            </li>
+                            {% endif %}
+                            
+                            {% for num in attendance_records.paginator.page_range %}
+                                {% if attendance_records.number == num %}
+                                <li class="page-item active"><a class="page-link" href="#">{{ num }}</a></li>
+                                {% elif num > attendance_records.number|add:'-3' and num < attendance_records.number|add:'3' %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ num }}{% if form.start_date.value %}&start_date={{ form.start_date.value|date:'Y-m-d' }}{% endif %}{% if form.end_date.value %}&end_date={{ form.end_date.value|date:'Y-m-d' }}{% endif %}{% if form.user.value %}&user={{ form.user.value }}{% endif %}">{{ num }}</a>
+                                </li>
+                                {% endif %}
+                            {% endfor %}
+                            
+                            {% if attendance_records.has_next %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ attendance_records.next_page_number }}{% if form.start_date.value %}&start_date={{ form.start_date.value|date:'Y-m-d' }}{% endif %}{% if form.end_date.value %}&end_date={{ form.end_date.value|date:'Y-m-d' }}{% endif %}{% if form.user.value %}&user={{ form.user.value }}{% endif %}" aria-label="Next">
+                                    <span aria-hidden="true">&raquo;</span>
+                                </a>
+                            </li>
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ attendance_records.paginator.num_pages }}{% if form.start_date.value %}&start_date={{ form.start_date.value|date:'Y-m-d' }}{% endif %}{% if form.end_date.value %}&end_date={{ form.end_date.value|date:'Y-m-d' }}{% endif %}{% if form.user.value %}&user={{ form.user.value }}{% endif %}" aria-label="Last">
+                                    <span aria-hidden="true">&raquo;&raquo;</span>
+                                </a>
+                            </li>
+                            {% endif %}
+                        </ul>
+                    </nav>
+                </div>
+                {% endif %}
+                
+            {% else %}
+                <div class="text-center py-5">
+                    <div class="mb-4">
+                        <i class="fas fa-calendar-times fa-4x text-gray-300 mb-3"></i>
+                        <h4 class="text-gray-800">No attendance records found</h4>
+                        <p class="text-gray-600">No attendance records match your filter criteria.</p>
+                    </div>
+                    <a href="{% url 'attendance:attendance_history' %}" class="btn btn-primary">
+                        <i class="fas fa-sync me-1"></i>Reset Filters
+                    </a>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize tooltips
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+        var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl)
+        })
+    });
+</script>
+{% endblock %}
+{% endblock %}

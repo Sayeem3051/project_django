@@ -1,0 +1,176 @@
+{% extends 'base.html' %}
+
+{% block title %}Dashboard - Attendance Management System{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Page Heading -->
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <h1 class="h3 mb-0 text-gray-800">
+            <i class="fas fa-tachometer-alt me-2"></i>Dashboard
+        </h1>
+        <a href="{% url 'attendance:mark_attendance' %}" class="d-none d-sm-inline-block btn btn-sm btn-primary shadow-sm">
+            <i class="fas fa-check-circle fa-sm text-white-50 me-2"></i>Mark Attendance
+        </a>
+    </div>
+
+    <!-- Content Row -->
+    <div class="row">
+        <!-- Today's Attendance Card -->
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-primary shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">Today's Status</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                {% if today_attendance %}
+                                    {% if today_attendance.check_in_time and today_attendance.check_out_time %}
+                                        <span class="text-success">Checked Out</span>
+                                    {% elif today_attendance.check_in_time %}
+                                        <span class="text-warning">Checked In</span>
+                                    {% else %}
+                                        <span class="text-danger">Not Marked</span>
+                                    {% endif %}
+                                {% else %}
+                                    <span class="text-danger">Not Marked</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-calendar fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Check-in Time Card -->
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-success shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">Check-in Time</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                {% if today_attendance and today_attendance.check_in_time %}
+                                    {{ today_attendance.check_in_time|time:"H:i:s" }}
+                                {% else %}
+                                    --:--:--
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-clock fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Check-out Time Card -->
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-info shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-info text-uppercase mb-1">Check-out Time</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                {% if today_attendance and today_attendance.check_out_time %}
+                                    {{ today_attendance.check_out_time|time:"H:i:s" }}
+                                {% else %}
+                                    --:--:--
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-sign-out-alt fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Working Hours Card -->
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-warning shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">Working Hours</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                {% if today_attendance and today_attendance.check_in_time and today_attendance.check_out_time %}
+                                    {{ today_attendance.get_duration }}
+                                {% else %}
+                                    N/A
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-business-time fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Attendance Table -->
+    <div class="card shadow mb-4">
+        <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+            <h6 class="m-0 font-weight-bold text-primary">Recent Attendance</h6>
+            <a href="{% url 'attendance:attendance_history' %}" class="btn btn-sm btn-primary">
+                <i class="fas fa-history fa-sm me-1"></i>View All
+            </a>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-bordered" width="100%" cellspacing="0">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Check-in</th>
+                            <th>Check-out</th>
+                            <th>Duration</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for attendance in recent_attendance %}
+                        <tr>
+                            <td>{{ attendance.date }}</td>
+                            <td>
+                                {% if attendance.check_in_time %}
+                                    {{ attendance.check_in_time|time:"H:i:s" }}
+                                {% else %}
+                                    --:--:--
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if attendance.check_out_time %}
+                                    {{ attendance.check_out_time|time:"H:i:s" }}
+                                {% else %}
+                                    --:--:--
+                                {% endif %}
+                            </td>
+                            <td>{{ attendance.get_duration }}</td>
+                            <td>
+                                {% if attendance.is_present %}
+                                    <span class="badge bg-success">Present</span>
+                                {% else %}
+                                    <span class="badge bg-danger">Absent</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="5" class="text-center">No attendance records found.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
