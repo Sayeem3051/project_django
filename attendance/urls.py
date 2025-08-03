@@ -10,4 +10,6 @@ urlpatterns = [
     path('report/', views.attendance_report, name='attendance_report'),
     path('upload-face/', views.upload_face, name='upload_face'),
     path('upload-fingerprint/', views.upload_fingerprint, name='upload_fingerprint'),
+    path('test-camera/', views.test_camera, name='test_camera'),
+    path('debug-camera/', views.debug_camera, name='debug_camera'),
 ]

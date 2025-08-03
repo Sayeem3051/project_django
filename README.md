@@ -5,7 +5,7 @@ A comprehensive Django-based attendance management system with face recognition 
 
 ## Features
 - **Multiple Authentication Methods**:
-  - Face Recognition
+  - **Face Recognition** (✅ Implemented with real camera access)
   - Fingerprint Scanning
   - Manual Entry
 - **User Management**:
@@ -24,31 +24,49 @@ A comprehensive Django-based attendance management system with face recognition 
   - User Management
   - Attendance Overview
   - System Configuration
+- **Camera Integration**:
+  - Real-time camera access using Web API
+  - Face detection and capture
+  - Image processing and validation
+  - Secure file upload handling
 
 ## Technology Stack
 - **Backend**: Django (Python)
 - **Frontend**: HTML, CSS, JavaScript, Bootstrap
 - **Database**: SQLite (default), compatible with PostgreSQL, MySQL
 - **Authentication**: Django Authentication System
+- **Camera Integration**: Web MediaDevices API, Canvas API for image processing
 - **Biometric Integration**: JavaScript APIs for camera and fingerprint scanner
 
 ## Installation
 
-### Prerequisites
+### Quick Start (Recommended)
+```bash
+# Clone the repository
+git clone https://github.com/Abhishek-max825/project_django.git
+cd project_django
+
+# Run the automated installation script
+python install.py
+```
+
+### Manual Installation
+
+#### Prerequisites
 - Python 3.8 or higher
 - pip (Python package manager)
 - Virtual environment (recommended)
 
-### Setup Instructions
+#### Setup Instructions
 
 1. **Clone the repository**
-   ```
-   git clone <repository-url>
-   cd project_new
+   ```bash
+   git clone https://github.com/Abhishek-max825/project_django.git
+   cd project_django
    ```
 
 2. **Create and activate a virtual environment**
-   ```
+   ```bash
    # Windows
    python -m venv venv
    venv\Scripts\activate
@@ -59,28 +77,57 @@ A comprehensive Django-based attendance management system with face recognition 
    ```
 
 3. **Install dependencies**
-   ```
+   ```bash
    pip install -r requirements.txt
    ```
 
 4. **Apply migrations**
-   ```
+   ```bash
    python manage.py migrate
    ```
 
 5. **Create a superuser**
-   ```
+   ```bash
    python manage.py createsuperuser
    ```
 
 6. **Run the development server**
-   ```
+   ```bash
    python manage.py runserver
    ```
 
 7. **Access the application**
    - Main application: http://127.0.0.1:8000/
    - Admin interface: http://127.0.0.1:8000/admin/
+   - Camera test: http://127.0.0.1:8000/attendance/test-camera/
+
+### Platform-Specific Notes
+
+#### Windows
+- No additional system dependencies required
+- OpenCV will be installed automatically via pip
+
+#### Linux
+- May need to install OpenCV system dependencies:
+  ```bash
+  sudo apt install libgl1-mesa-glx libglib2.0-0
+  ```
+
+#### macOS
+- Install OpenCV via Homebrew:
+  ```bash
+  brew install opencv
+  ```
+
+### Troubleshooting Installation
+
+If you encounter issues:
+
+1. **Check Python version**: Ensure you have Python 3.8+
+2. **Use the installation script**: `python install.py`
+3. **Check platform-specific requirements** in DEPLOYMENT_GUIDE.md
+4. **Verify virtual environment**: Make sure it's activated
+5. **Check pip**: Ensure pip is up to date
 
 ## Usage
 
@@ -95,6 +142,19 @@ A comprehensive Django-based attendance management system with face recognition 
 3. Upload face image and/or fingerprint data for biometric verification
 4. Mark attendance using preferred verification method
 5. View attendance history and personal reports
+
+### Camera Functionality
+1. **Face Upload**: Navigate to "Upload Face" to capture your face image using your device's camera
+2. **Attendance Marking**: When marking attendance, select "Face Recognition" as verification method
+3. **Camera Access**: The system will request camera permissions - allow access for face verification
+4. **Face Detection**: The system includes basic face detection to ensure a face is visible in the captured image
+5. **Image Processing**: Captured images are processed and stored securely for attendance verification
+
+#### Camera Requirements
+- Modern web browser with camera support (Chrome, Firefox, Safari, Edge)
+- HTTPS connection (required for camera access in most browsers)
+- Camera permissions granted to the website
+- Front-facing camera recommended for best results
 
 ## Project Structure
 

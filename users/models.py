@@ -10,6 +10,8 @@ class Profile(models.Model):
     position = models.CharField(max_length=100, blank=True)
     phone_number = models.CharField(max_length=15, blank=True)
     face_image = models.ImageField(upload_to='face_images/', blank=True, null=True)
+    face_encoding_path = models.CharField(max_length=255, blank=True, null=True)
+    face_recognition_enabled = models.BooleanField(default=False)
     fingerprint_data = models.ImageField(upload_to='fingerprint_data/', blank=True, null=True)
     date_joined = models.DateTimeField(auto_now_add=True)
     

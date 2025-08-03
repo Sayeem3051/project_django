@@ -120,7 +120,7 @@
                                     <label class="form-check-label" for="manual">Manual</label>
                                 </div>
                                 <div class="form-check form-check-inline">
-                                    <input class="form-check-input" type="radio" name="verification_method" id="face" value="face" {% if not user.profile.face_image %}disabled{% endif %}>
+                                    <input class="form-check-input" type="radio" name="verification_method" id="face" value="face" {% if not user.profile.face_recognition_enabled %}disabled{% endif %}>
                                     <label class="form-check-label" for="face">Face Recognition</label>
                                 </div>
                                 <div class="form-check form-check-inline">
@@ -128,12 +128,12 @@
                                     <label class="form-check-label" for="fingerprint">Fingerprint</label>
                                 </div>
                             </div>
-                            {% if not user.profile.face_image or not user.profile.fingerprint_data %}
+                            {% if not user.profile.face_recognition_enabled or not user.profile.fingerprint_data %}
                             <div class="form-text text-center mt-2">
-                                {% if not user.profile.face_image and not user.profile.fingerprint_data %}
-                                    Face image and fingerprint data not uploaded. <a href="{% url 'users:profile' %}">Upload now</a>.
-                                {% elif not user.profile.face_image %}
-                                    Face image not uploaded. <a href="{% url 'users:profile' %}">Upload now</a>.
+                                {% if not user.profile.face_recognition_enabled and not user.profile.fingerprint_data %}
+                                    Face recognition and fingerprint data not set up. <a href="{% url 'users:profile' %}">Set up now</a>.
+                                {% elif not user.profile.face_recognition_enabled %}
+                                    Face recognition not enabled. <a href="{% url 'attendance:upload_face' %}">Upload face image</a>.
                                 {% elif not user.profile.fingerprint_data %}
                                     Fingerprint data not uploaded. <a href="{% url 'users:profile' %}">Upload now</a>.
                                 {% endif %}
@@ -152,12 +152,20 @@
                                 <i class="fas fa-camera me-2"></i>Face recognition verification will be used. Please position your face in front of the camera.
                             </div>
                             <div class="text-center mb-3">
-                                <div id="camera-container" class="mx-auto" style="width: 320px; height: 240px; border: 1px solid #ddd; background-color: #f8f9fc; display: flex; align-items: center; justify-content: center;">
+                                <div id="camera-container" class="mx-auto" style="width: 400px; height: 300px; border: 1px solid #ddd; background-color: #f8f9fc; display: flex; align-items: center; justify-content: center;">
                                     <span class="text-muted">Camera feed will appear here</span>
                                 </div>
                                 <button type="button" id="start-camera" class="btn btn-outline-primary mt-2">
                                     <i class="fas fa-video me-1"></i>Start Camera
                                 </button>
+                                <button type="button" id="capture-face" class="btn btn-primary mt-2 ms-2" style="display: none;">
+                                    <i class="fas fa-camera me-1"></i>Capture Face
+                                </button>
+                                <button type="button" id="retake-face" class="btn btn-outline-secondary mt-2 ms-2" style="display: none;">
+                                    <i class="fas fa-redo me-1"></i>Retake
+                                </button>
+                                <input type="file" id="face_image" name="face_image" accept="image/*" style="display: none;">
+                                <div id="face-verification-result" class="mt-3"></div>
                             </div>
                         </div>
 
@@ -225,17 +233,37 @@
                 const selectedSection = document.getElementById(`${this.value}-section`);
                 if (selectedSection) {
                     selectedSection.classList.remove('d-none');
+                    
+                    // Initialize camera if face verification is selected
+                    if (this.value === 'face') {
+                        console.log('Face verification selected, initializing camera...');
+                        // Disable submit button until face is verified
+                        const submitBtn = document.querySelector('button[type="submit"]');
+                        if (submitBtn) {
+                            submitBtn.disabled = true;
+                        }
+                        
+                        // Initialize camera with a slight delay to ensure DOM is ready
+                        setTimeout(() => {
+                            initAttendanceCamera();
+                        }, 100);
+                    } else {
+                        // Enable submit button for other verification methods
+                        const submitBtn = document.querySelector('button[type="submit"]');
+                        if (submitBtn) {
+                            submitBtn.disabled = false;
+                        }
+                    }
                 }
             });
         });
 
-        // Camera functionality (placeholder - would need actual implementation)
-        const startCameraBtn = document.getElementById('start-camera');
-        if (startCameraBtn) {
-            startCameraBtn.addEventListener('click', function() {
-                const cameraContainer = document.getElementById('camera-container');
-                cameraContainer.innerHTML = '<div class="alert alert-warning">Camera access is not implemented in this demo.</div>';
-            });
+        // Camera functionality is handled by camera.js
+        // Additional face verification result handling
+        const faceVerificationResult = document.getElementById('face-verification-result');
+        if (faceVerificationResult) {
+            // This will be updated by the camera.js functions when face is captured
+            console.log('Face verification result element found');
         }
 
         // Fingerprint functionality (placeholder - would need actual implementation)
@@ -245,6 +273,13 @@
                 const fingerprintContainer = document.getElementById('fingerprint-container');
                 fingerprintContainer.innerHTML = '<div class="alert alert-warning">Fingerprint scanning is not implemented in this demo.</div>';
             });
+        }
+        
+        // Set default verification method to manual if available
+        const manualMethod = document.getElementById('manual');
+        if (manualMethod) {
+            manualMethod.checked = true;
+            manualMethod.dispatchEvent(new Event('change'));
         }
     });
 </script>

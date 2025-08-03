@@ -16,6 +16,10 @@ python-dotenv==1.0.1  # Environment variable management
 # Date and time handling
 pytz==2024.1
 
+# Face recognition and image processing
+opencv-python==4.9.0.80  # For face detection and image processing
+numpy==1.26.4  # Required for numerical operations
+
 # Optional - for PostgreSQL database
 # psycopg2-binary==2.9.9
 

@@ -1,0 +1,205 @@
+{% extends 'base.html' %}
+
+{% block title %}Debug Camera - Attendance Management System{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-lg-10 mx-auto">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Camera Debug Information</h6>
+                </div>
+                <div class="card-body">
+                    <div class="text-center mb-4">
+                        <h4>Camera Debug Console</h4>
+                        <p>This page helps diagnose camera access issues.</p>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h6>Browser Information</h6>
+                                </div>
+                                <div class="card-body">
+                                    <div id="browser-info">
+                                        <p class="text-muted">Loading browser information...</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h6>Camera Test</h6>
+                                </div>
+                                <div class="card-body">
+                                    <div id="camera-container" class="mx-auto mb-3" style="width: 320px; height: 240px; border: 1px solid #ddd; background-color: #f8f9fc; display: flex; align-items: center; justify-content: center;">
+                                        <span class="text-muted">Camera feed will appear here</span>
+                                    </div>
+                                    <button type="button" id="start-camera" class="btn btn-primary">
+                                        <i class="fas fa-video me-1"></i>Test Camera
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row mt-4">
+                        <div class="col-12">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h6>Debug Console</h6>
+                                </div>
+                                <div class="card-body">
+                                    <div id="debug-console" style="background-color: #f8f9fa; padding: 10px; border-radius: 5px; font-family: monospace; font-size: 12px; max-height: 300px; overflow-y: auto;">
+                                        <p>Debug information will appear here...</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row mt-4">
+                        <div class="col-12">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h6>Troubleshooting Steps</h6>
+                                </div>
+                                <div class="card-body">
+                                    <ol>
+                                        <li><strong>Check Browser Support:</strong> Ensure you're using a modern browser (Chrome, Firefox, Safari, Edge)</li>
+                                        <li><strong>Allow Camera Permissions:</strong> When prompted, click "Allow" for camera access</li>
+                                        <li><strong>Check Camera Hardware:</strong> Ensure your camera is connected and working</li>
+                                        <li><strong>Try Different Browser:</strong> If one browser doesn't work, try another</li>
+                                        <li><strong>Check HTTPS:</strong> Camera access requires HTTPS in production (localhost works for development)</li>
+                                        <li><strong>Clear Browser Cache:</strong> Sometimes clearing cache helps with permission issues</li>
+                                    </ol>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const debugConsole = document.getElementById('debug-console');
+        const browserInfo = document.getElementById('browser-info');
+        const startCameraBtn = document.getElementById('start-camera');
+        const cameraContainer = document.getElementById('camera-container');
+        
+        function log(message) {
+            const timestamp = new Date().toLocaleTimeString();
+            debugConsole.innerHTML += `<div>[${timestamp}] ${message}</div>`;
+            debugConsole.scrollTop = debugConsole.scrollHeight;
+            console.log(message);
+        }
+        
+        // Check browser information
+        function checkBrowserInfo() {
+            const info = {
+                'User Agent': navigator.userAgent,
+                'Platform': navigator.platform,
+                'Language': navigator.language,
+                'Cookie Enabled': navigator.cookieEnabled,
+                'Online': navigator.onLine,
+                'Protocol': window.location.protocol,
+                'Hostname': window.location.hostname,
+                'MediaDevices API': !!navigator.mediaDevices,
+                'getUserMedia': !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia),
+                'enumerateDevices': !!(navigator.mediaDevices && navigator.mediaDevices.enumerateDevices)
+            };
+            
+            let infoHTML = '<ul class="list-unstyled">';
+            for (const [key, value] of Object.entries(info)) {
+                infoHTML += `<li><strong>${key}:</strong> ${value}</li>`;
+            }
+            infoHTML += '</ul>';
+            
+            browserInfo.innerHTML = infoHTML;
+            
+            log('Browser information collected');
+        }
+        
+        // Check available media devices
+        async function checkMediaDevices() {
+            try {
+                log('Checking available media devices...');
+                const devices = await navigator.mediaDevices.enumerateDevices();
+                const videoDevices = devices.filter(device => device.kind === 'videoinput');
+                
+                log(`Found ${videoDevices.length} video devices:`);
+                videoDevices.forEach((device, index) => {
+                    log(`  ${index + 1}. ${device.label || 'Unknown camera'} (${device.deviceId})`);
+                });
+                
+                if (videoDevices.length === 0) {
+                    log('WARNING: No video devices found!');
+                }
+            } catch (error) {
+                log(`ERROR: Could not enumerate devices: ${error.message}`);
+            }
+        }
+        
+        // Test camera access
+        async function testCamera() {
+            log('Starting camera test...');
+            
+            try {
+                log('Requesting camera access...');
+                const stream = await navigator.mediaDevices.getUserMedia({
+                    video: {
+                        width: { ideal: 640 },
+                        height: { ideal: 480 },
+                        facingMode: 'user'
+                    }
+                });
+                
+                log('Camera access granted successfully!');
+                log(`Stream tracks: ${stream.getTracks().length}`);
+                
+                // Display video
+                const video = document.createElement('video');
+                video.srcObject = stream;
+                video.autoplay = true;
+                video.muted = true;
+                video.style.width = '100%';
+                video.style.height = '100%';
+                
+                cameraContainer.innerHTML = '';
+                cameraContainer.appendChild(video);
+                
+                log('Video element created and stream attached');
+                
+                // Stop stream after 10 seconds for testing
+                setTimeout(() => {
+                    stream.getTracks().forEach(track => track.stop());
+                    log('Camera stream stopped (test completed)');
+                    cameraContainer.innerHTML = '<span class="text-success">✅ Camera test completed successfully!</span>';
+                }, 10000);
+                
+            } catch (error) {
+                log(`ERROR: Camera test failed: ${error.name} - ${error.message}`);
+                cameraContainer.innerHTML = `<span class="text-danger">❌ Camera test failed: ${error.message}</span>`;
+            }
+        }
+        
+        // Initialize
+        log('Debug page loaded');
+        checkBrowserInfo();
+        checkMediaDevices();
+        
+        if (startCameraBtn) {
+            startCameraBtn.addEventListener('click', testCamera);
+        }
+    });
+</script>
+{% endblock %}
+{% endblock %} 

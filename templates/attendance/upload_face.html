@@ -111,26 +111,26 @@
                     <div class="row">
                         <div class="col-md-8 mx-auto">
                             <div class="text-center mb-3">
-                                <div id="camera-container" class="mx-auto mb-3" style="width: 320px; height: 240px; border: 1px solid #ddd; background-color: #f8f9fc; display: flex; align-items: center; justify-content: center;">
+                                <div id="face-capture-container" class="mx-auto mb-3" style="width: 400px; height: 300px; border: 1px solid #ddd; background-color: #f8f9fc; display: flex; align-items: center; justify-content: center;">
                                     <span class="text-muted">Camera feed will appear here</span>
                                 </div>
                                 <div class="btn-group" role="group">
                                     <button type="button" id="start-camera" class="btn btn-outline-primary">
                                         <i class="fas fa-video me-1"></i>Start Camera
                                     </button>
-                                    <button type="button" id="capture-image" class="btn btn-primary" disabled>
+                                    <button type="button" id="capture-button" class="btn btn-primary" style="display: none;">
                                         <i class="fas fa-camera me-1"></i>Capture
                                     </button>
-                                    <button type="button" id="retake-image" class="btn btn-outline-secondary" disabled>
+                                    <button type="button" id="retake-button" class="btn btn-outline-secondary" style="display: none;">
                                         <i class="fas fa-redo me-1"></i>Retake
                                     </button>
                                 </div>
+                                <div id="result-container" class="mt-3"></div>
                             </div>
 
                             <form method="POST" id="camera-form" enctype="multipart/form-data" class="d-none">
                                 {% csrf_token %}
-                                <input type="hidden" name="camera_capture" value="true">
-                                <input type="hidden" name="image_data" id="image-data">
+                                <input type="file" name="face_image" id="face_image" accept="image/*" style="display: none;">
                                 <div class="mb-3">
                                     <div class="form-check">
                                         <input class="form-check-input" type="checkbox" id="camera-consent" name="consent" required>
@@ -156,97 +156,16 @@
 {% block extra_js %}
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        // Camera functionality (placeholder - would need actual implementation)
-        const startCameraBtn = document.getElementById('start-camera');
-        const captureImageBtn = document.getElementById('capture-image');
-        const retakeImageBtn = document.getElementById('retake-image');
-        const cameraContainer = document.getElementById('camera-container');
-        const cameraForm = document.getElementById('camera-form');
-        const imageDataInput = document.getElementById('image-data');
+        // Camera functionality is now handled by camera.js
+        // The camera will be automatically initialized when the page loads
         
-        let stream = null;
-        let video = null;
-        let canvas = null;
-        let captured = false;
-        
-        if (startCameraBtn) {
-            startCameraBtn.addEventListener('click', function() {
-                // This is a simplified implementation
-                // In a real application, you would use the MediaDevices API
-                cameraContainer.innerHTML = '<div class="alert alert-warning">Camera access is not implemented in this demo version.</div>';
-                
-                // Simulate camera started
-                captureImageBtn.disabled = false;
-                startCameraBtn.disabled = true;
-                
-                // In a real implementation:
-                /*
-                navigator.mediaDevices.getUserMedia({ video: true })
-                    .then(function(mediaStream) {
-                        stream = mediaStream;
-                        video = document.createElement('video');
-                        video.srcObject = mediaStream;
-                        video.setAttribute('playsinline', true);
-                        video.play();
-                        cameraContainer.innerHTML = '';
-                        cameraContainer.appendChild(video);
-                        captureImageBtn.disabled = false;
-                        startCameraBtn.disabled = true;
-                    })
-                    .catch(function(error) {
-                        console.error('Error accessing camera:', error);
-                        cameraContainer.innerHTML = '<div class="alert alert-danger">Failed to access camera: ' + error.message + '</div>';
-                    });
-                */
-            });
-        }
-        
-        if (captureImageBtn) {
-            captureImageBtn.addEventListener('click', function() {
-                // Simulate capture
-                cameraContainer.innerHTML = '<div class="alert alert-success">Image captured successfully!</div>';
-                captureImageBtn.disabled = true;
-                retakeImageBtn.disabled = false;
-                cameraForm.classList.remove('d-none');
-                
-                // In a real implementation:
-                /*
-                canvas = document.createElement('canvas');
-                canvas.width = video.videoWidth;
-                canvas.height = video.videoHeight;
-                canvas.getContext('2d').drawImage(video, 0, 0);
-                cameraContainer.innerHTML = '';
-                cameraContainer.appendChild(canvas);
-                
-                // Convert to base64 for form submission
-                imageDataInput.value = canvas.toDataURL('image/png');
-                captured = true;
-                captureImageBtn.disabled = true;
-                retakeImageBtn.disabled = false;
-                cameraForm.classList.remove('d-none');
-                */
-            });
-        }
-        
-        if (retakeImageBtn) {
-            retakeImageBtn.addEventListener('click', function() {
-                // Simulate retake
-                cameraContainer.innerHTML = '<div class="alert alert-warning">Camera access is not implemented in this demo version.</div>';
-                captureImageBtn.disabled = false;
-                retakeImageBtn.disabled = true;
-                cameraForm.classList.add('d-none');
-                
-                // In a real implementation:
-                /*
-                if (canvas) {
-                    cameraContainer.removeChild(canvas);
-                    cameraContainer.appendChild(video);
-                    captured = false;
-                    captureImageBtn.disabled = false;
-                    retakeImageBtn.disabled = true;
-                    cameraForm.classList.add('d-none');
+        // Show the camera form when an image is captured
+        const faceImageInput = document.getElementById('face_image');
+        if (faceImageInput) {
+            faceImageInput.addEventListener('change', function() {
+                if (this.files.length > 0) {
+                    document.getElementById('camera-form').classList.remove('d-none');
                 }
-                */
             });
         }
     });

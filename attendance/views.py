@@ -38,26 +38,118 @@ def mark_attendance(request):
     
     if request.method == 'POST':
         form = AttendanceForm(request.POST, instance=attendance)
+        verification_method = request.POST.get('verification_method', 'manual')
+        
         if form.is_valid():
+            # Handle face verification
+            if verification_method == 'face':
+                if 'face_image' in request.FILES:
+                    # Use the face recognition system
+                    from .face_recognition_utils import process_uploaded_image, detect_faces, extract_face_features, verify_face
+                    
+                    # Process the uploaded face image
+                    image_array = process_uploaded_image(request.FILES['face_image'])
+                    if image_array is not None:
+                        # Detect faces in the image
+                        face_locations = detect_faces(image_array)
+                        
+                        if not face_locations:
+                            messages.error(request, 'No face detected in the image. Please try again.')
+                            context = {
+                                'form': form,
+                                'attendance': attendance,
+                                'created': created,
+                            }
+                            return render(request, 'attendance/mark_attendance.html', context)
+                        
+                        if len(face_locations) > 1:
+                            messages.error(request, 'Multiple faces detected. Please ensure only your face is visible.')
+                            context = {
+                                'form': form,
+                                'attendance': attendance,
+                                'created': created,
+                            }
+                            return render(request, 'attendance/mark_attendance.html', context)
+                        
+                        # Extract face features
+                        face_features = extract_face_features(image_array, face_locations)
+                        
+                        if not face_features:
+                            messages.error(request, 'Could not extract facial features. Please try again.')
+                            context = {
+                                'form': form,
+                                'attendance': attendance,
+                                'created': created,
+                            }
+                            return render(request, 'attendance/mark_attendance.html', context)
+                        
+                        # Verify the face
+                        is_match, confidence, message = verify_face(request.user, face_features[0])
+                        
+                        if is_match:
+                            verification_method = 'face'
+                        else:
+                            messages.error(request, f'Face verification failed: {message}')
+                            context = {
+                                'form': form,
+                                'attendance': attendance,
+                                'created': created,
+                                'verification_failed': True,
+                                'verification_message': message
+                            }
+                            return render(request, 'attendance/mark_attendance.html', context)
+                    else:
+                        messages.error(request, 'Face verification failed. Please try again or enable face recognition in your profile.')
+                        context = {
+                            'form': form,
+                            'attendance': attendance,
+                            'created': created,
+                        }
+                        return render(request, 'attendance/mark_attendance.html', context)
+                else:
+                    messages.error(request, 'Face verification failed. Please try again.')
+                    context = {
+                        'form': form,
+                        'attendance': attendance,
+                        'created': created,
+                    }
+                    return render(request, 'attendance/mark_attendance.html', context)
+            
             # If attendance record already exists and has check_in_time but no check_out_time
             if not created and attendance.check_in_time and not attendance.check_out_time:
                 attendance.check_out_time = now
                 attendance.notes = form.cleaned_data.get('notes', '')
+                if verification_method == 'face':
+                    attendance.attendance_type = 'face'
                 attendance.save()
                 
                 # Create attendance log for check-out
                 AttendanceLog.objects.create(
                     user=request.user,
                     log_type='check_out',
-                    verification_method='manual',
+                    verification_method=verification_method,
                     ip_address=request.META.get('REMOTE_ADDR'),
                     device_info=request.META.get('HTTP_USER_AGENT', '')[:255]
                 )
                 
-                messages.success(request, 'Check-out recorded successfully!')
+                messages.success(request, f'Check-out recorded successfully using {verification_method} verification!')
             else:
-                form.save()
-                messages.success(request, 'Attendance updated successfully!')
+                attendance_form = form.save(commit=False)
+                if verification_method == 'face':
+                    attendance_form.attendance_type = 'face'
+                attendance_form.save()
+                
+                # Create attendance log for check-in if this is a new record
+                if created:
+                    AttendanceLog.objects.create(
+                        user=request.user,
+                        log_type='check_in',
+                        verification_method=verification_method,
+                        ip_address=request.META.get('REMOTE_ADDR'),
+                        device_info=request.META.get('HTTP_USER_AGENT', '')[:255]
+                    )
+                
+                messages.success(request, f'Attendance updated successfully using {verification_method} verification!')
             
             return redirect('attendance:attendance_home')
     else:
@@ -67,6 +159,7 @@ def mark_attendance(request):
         'form': form,
         'attendance': attendance,
         'created': created,
+        'face_recognition_enabled': hasattr(request.user, 'profile') and request.user.profile.face_recognition_enabled
     }
     
     return render(request, 'attendance/mark_attendance.html', context)
@@ -286,11 +379,58 @@ def attendance_report(request):
 @login_required
 def upload_face(request):
     """Upload face image for recognition"""
+    from .face_recognition_utils import process_uploaded_image, detect_faces, extract_face_features, save_face_encoding
+    
     if request.method == 'POST':
         if 'face_image' in request.FILES:
-            request.user.profile.face_image = request.FILES['face_image']
-            request.user.profile.save()
-            messages.success(request, 'Face image uploaded successfully!')
+            # Validate file type
+            file = request.FILES['face_image']
+            if not file.content_type.startswith('image/'):
+                messages.error(request, 'Please upload a valid image file.')
+                return render(request, 'attendance/upload_face.html')
+            
+            # Check file size (5MB limit)
+            if file.size > 5 * 1024 * 1024:
+                messages.error(request, 'File size must be less than 5MB.')
+                return render(request, 'attendance/upload_face.html')
+            
+            # Process the uploaded image for face recognition
+            image_array = process_uploaded_image(file)
+            if image_array is None:
+                messages.error(request, 'Could not process the uploaded image. Please try again with a different image.')
+                return render(request, 'attendance/upload_face.html')
+            
+            # Detect faces in the image
+            face_locations = detect_faces(image_array)
+            
+            if not face_locations:
+                messages.error(request, 'No face detected in the uploaded image. Please upload a clear image of your face.')
+                return render(request, 'attendance/upload_face.html')
+            
+            if len(face_locations) > 1:
+                messages.error(request, 'Multiple faces detected in the image. Please upload an image with only your face.')
+                return render(request, 'attendance/upload_face.html')
+            
+            # Extract face features
+            face_features = extract_face_features(image_array, face_locations)
+            
+            if not face_features:
+                messages.error(request, 'Could not extract facial features. Please upload a clearer image.')
+                return render(request, 'attendance/upload_face.html')
+            
+            # Save the face image
+            request.user.profile.face_image = file
+            
+            # Save the face features
+            if save_face_encoding(request.user, face_features[0]):
+                # Enable face recognition for this user
+                request.user.profile.face_recognition_enabled = True
+                request.user.profile.save()
+                messages.success(request, 'Face image uploaded and processed successfully! Face recognition is now enabled for your account.')
+            else:
+                request.user.profile.save()
+                messages.warning(request, 'Face image uploaded but there was an issue processing the facial features. Face recognition may not work properly.')
+            
             return redirect('users:profile')
         else:
             messages.error(request, 'No image file provided.')
@@ -310,3 +450,13 @@ def upload_fingerprint(request):
             messages.error(request, 'No fingerprint data provided.')
     
     return render(request, 'attendance/upload_fingerprint.html')
+
+@login_required
+def test_camera(request):
+    """Test camera functionality"""
+    return render(request, 'attendance/test_camera.html')
+
+@login_required
+def debug_camera(request):
+    """Debug camera functionality"""
+    return render(request, 'attendance/debug_camera.html')
