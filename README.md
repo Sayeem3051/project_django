@@ -24,6 +24,7 @@ A comprehensive Django-based attendance management system with face recognition 
   - User Management
   - Attendance Overview
   - System Configuration
+  - **Notification Dashboard**: Real-time attendance monitoring with live statistics and notification management
 - **Camera Integration**:
   - Real-time camera access using Web API
   - Face detection and capture
@@ -100,6 +101,7 @@ python install.py
    - Main application: http://127.0.0.1:8000/
    - Admin interface: http://127.0.0.1:8000/admin/
    - Camera test: http://127.0.0.1:8000/attendance/test-camera/
+   - Notification Dashboard: http://127.0.0.1:8000/attendance/notifications/
 
 ### Platform-Specific Notes
 
@@ -135,6 +137,42 @@ If you encounter issues:
 1. Log in to the admin interface using the superuser credentials
 2. Manage users, departments, and attendance records
 3. Generate and export attendance reports
+4. Access the notification dashboard for daily attendance monitoring
+
+### Notification Dashboard (Admin Only)
+The notification dashboard provides real-time attendance monitoring and management:
+
+1. **Access the Dashboard**:
+   - Navigate to: http://127.0.0.1:8000/attendance/notifications/
+   - Requires admin/staff privileges to access
+
+2. **Features Available**:
+   - **Real-time Statistics**: View total students, present, absent, and late counts
+   - **Current Date & Time**: Live display of current date and time
+   - **Attendance Status Table**: Manage individual student attendance status
+   - **Recent Notifications**: View and manage system notifications
+   - **Daily Summary**: Create daily attendance summaries
+   - **Send Notifications**: Send alerts for absent/late students
+
+3. **How to Use**:
+   - **View Statistics**: Check the cards at the top for attendance overview
+   - **Update Status**: Use dropdown menus in the attendance table to change student status
+   - **Create Notifications**: Click "Create Daily Summary" or "Send Notifications" buttons
+   - **Mark as Read**: Click the checkmark button on unread notifications
+   - **Auto-refresh**: Dashboard refreshes every 5 minutes automatically
+
+4. **Attendance Status Options**:
+   - **Present**: Student is present and on time
+   - **Absent**: Student is not present
+   - **Late**: Student arrived late
+   - **Half Day**: Student attended for part of the day
+   - **On Leave**: Student is on approved leave
+
+5. **Notification Types**:
+   - **Daily Summary**: Overview of daily attendance
+   - **Absent Alert**: Notifications for absent students
+   - **Late Alert**: Notifications for late students
+   - **System Alert**: General system notifications
 
 ### Regular User
 1. Register a new account or log in with existing credentials

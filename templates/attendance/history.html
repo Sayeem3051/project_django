@@ -36,15 +36,15 @@
                 </div>
                 {% if user.is_staff %}
                 <div class="col-md-3">
-                    <label for="id_user" class="form-label">Employee</label>
-                    <select name="user" id="id_user" class="form-select">
-                        <option value="">All Employees</option>
-                        {% for employee in employees %}
-                            <option value="{{ employee.id }}" {% if form.user.value|stringformat:'s' == employee.id|stringformat:'s' %}selected{% endif %}>
-                                {{ employee.get_full_name|default:employee.username }}
+                                            <label for="id_user" class="form-label">Student</label>
+                        <select name="user" id="id_user" class="form-select">
+                            <option value="">All Students</option>
+                            {% for student in students %}
+                            <option value="{{ student.id }}" {% if form.user.value|stringformat:'s' == student.id|stringformat:'s' %}selected{% endif %}>
+                                {{ student.get_full_name|default:student.username }}
                             </option>
-                        {% endfor %}
-                    </select>
+                            {% endfor %}
+                        </select>
                 </div>
                 {% endif %}
                 <div class="col-md-3">
@@ -81,7 +81,7 @@
                             <tr>
                                 <th>Date</th>
                                 {% if user.is_staff and form.user.value == '' %}
-                                <th>Employee</th>
+                                <th>Student</th>
                                 {% endif %}
                                 <th>Check-in</th>
                                 <th>Check-out</th>

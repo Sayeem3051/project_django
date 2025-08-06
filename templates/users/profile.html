@@ -31,8 +31,8 @@
                         <p class="text-muted">{{ user.profile.position }} - {{ user.profile.department }}</p>
                     </div>
                     <div class="mb-3">
-                        <h6 class="font-weight-bold">Employee ID:</h6>
-                        <p>{{ user.profile.employee_id|default:"Not set" }}</p>
+                                        <h6 class="font-weight-bold">Student ID:</h6>
+                <p>{{ user.profile.employee_id|default:"Not set" }}</p>
                     </div>
                     <div class="mb-3">
                         <h6 class="font-weight-bold">Email:</h6>
@@ -99,11 +99,11 @@
 
                             <!-- Profile Form Fields -->
                             <div class="col-md-6 mb-3">
-                                <label for="{{ p_form.employee_id.id_for_label }}" class="form-label">Employee ID</label>
-                                {{ p_form.employee_id }}
-                                {% if p_form.employee_id.errors %}
-                                    <div class="text-danger small mt-1">{{ p_form.employee_id.errors }}</div>
-                                {% endif %}
+                                                        <label for="{{ p_form.employee_id.id_for_label }}" class="form-label">Student ID</label>
+                        {{ p_form.employee_id }}
+                        {% if p_form.employee_id.errors %}
+                        <div class="text-danger small mt-1">{{ p_form.employee_id.errors }}</div>
+                        {% endif %}
                             </div>
                             <div class="col-md-6 mb-3">
                                 <label for="{{ p_form.phone_number.id_for_label }}" class="form-label">Phone Number</label>

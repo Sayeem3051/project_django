@@ -4,9 +4,8 @@ from django.utils import timezone
 
 class Attendance(models.Model):
     ATTENDANCE_TYPES = (
-        ('face', 'Face Recognition'),
-        ('fingerprint', 'Fingerprint'),
-        ('manual', 'Manual Entry'),
+        ('student', 'Student'),
+        ('teacher', 'Teacher'),
     )
     
     user = models.ForeignKey(User, on_delete=models.CASCADE)
@@ -49,10 +48,61 @@ class AttendanceLog(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     timestamp = models.DateTimeField(auto_now_add=True)
     log_type = models.CharField(max_length=10, choices=LOG_TYPES)
-    verification_method = models.CharField(max_length=20, choices=Attendance.ATTENDANCE_TYPES)
+    verification_method = models.CharField(max_length=20, choices=Attendance.ATTENDANCE_TYPES, default='student')
     success = models.BooleanField(default=True)
     ip_address = models.GenericIPAddressField(null=True, blank=True)
     device_info = models.CharField(max_length=255, blank=True, null=True)
     
     def __str__(self):
         return f"{self.user.username} - {self.log_type} - {self.timestamp}"
+
+class DailyAttendanceNotification(models.Model):
+    NOTIFICATION_TYPES = (
+        ('daily_summary', 'Daily Summary'),
+        ('absent_alert', 'Absent Alert'),
+        ('late_alert', 'Late Alert'),
+        ('system_alert', 'System Alert'),
+    )
+    
+    date = models.DateField(default=timezone.now)
+    notification_type = models.CharField(max_length=20, choices=NOTIFICATION_TYPES)
+    title = models.CharField(max_length=200)
+    message = models.TextField()
+    is_read = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        ordering = ['-created_at']
+    
+    def __str__(self):
+        return f"{self.title} - {self.date}"
+
+class AttendanceStatus(models.Model):
+    STATUS_CHOICES = (
+        ('present', 'Present'),
+        ('absent', 'Absent'),
+        ('late', 'Late'),
+        ('half_day', 'Half Day'),
+        ('leave', 'On Leave'),
+    )
+    
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    date = models.DateField(default=timezone.now)
+    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='absent')
+    check_in_time = models.TimeField(null=True, blank=True)
+    check_out_time = models.TimeField(null=True, blank=True)
+    notes = models.TextField(blank=True, null=True)
+    is_notified = models.BooleanField(default=False)
+    
+    class Meta:
+        unique_together = ['user', 'date']
+        ordering = ['-date', 'user']
+    
+    def __str__(self):
+        return f"{self.user.username} - {self.date} - {self.status}"
+    
+    @property
+    def is_late(self):
+        if self.check_in_time:
+            return self.check_in_time.hour >= 9  # Consider late after 9 AM
+        return False

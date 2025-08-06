@@ -31,15 +31,15 @@
                 </div>
                 {% if user.is_staff %}
                 <div class="col-md-3">
-                    <label for="id_user" class="form-label">Employee</label>
-                    <select name="user" id="id_user" class="form-select">
-                        <option value="">All Employees</option>
-                        {% for employee in employees %}
-                            <option value="{{ employee.id }}" {% if form.user.value|stringformat:'s' == employee.id|stringformat:'s' %}selected{% endif %}>
-                                {{ employee.get_full_name|default:employee.username }}
+                                            <label for="id_user" class="form-label">Student</label>
+                        <select name="user" id="id_user" class="form-select">
+                            <option value="">All Students</option>
+                            {% for student in students %}
+                            <option value="{{ student.id }}" {% if form.user.value|stringformat:'s' == student.id|stringformat:'s' %}selected{% endif %}>
+                                {{ student.get_full_name|default:student.username }}
                             </option>
-                        {% endfor %}
-                    </select>
+                            {% endfor %}
+                        </select>
                 </div>
                 {% endif %}
                 <div class="col-md-3">
@@ -90,7 +90,7 @@
                             {% if form.report_type.value == 'detailed' %}
                                 <th>Date</th>
                                 {% if user.is_staff and not form.user.value %}
-                                <th>Employee</th>
+                                <th>Student</th>
                                 {% endif %}
                                 <th>Check-in</th>
                                 <th>Check-out</th>
@@ -100,7 +100,7 @@
                                 <th>Notes</th>
                             {% else %}
                                 {% if user.is_staff and not form.user.value %}
-                                <th>Employee</th>
+                                <th>Student</th>
                                 {% endif %}
                                 <th>Total Days</th>
                                 <th>Present Days</th>
@@ -136,14 +136,10 @@
                                 </td>
                                 <td>{{ record.get_duration }}</td>
                                 <td>
-                                    {% if record.attendance_type == 'regular' %}
-                                        <span class="badge bg-primary">Regular</span>
-                                    {% elif record.attendance_type == 'wfh' %}
-                                        <span class="badge bg-info">WFH</span>
-                                    {% elif record.attendance_type == 'business_trip' %}
-                                        <span class="badge bg-warning">Business Trip</span>
-                                    {% elif record.attendance_type == 'leave' %}
-                                        <span class="badge bg-secondary">Leave</span>
+                                    {% if record.attendance_type == 'student' %}
+                                        <span class="badge bg-primary">Student</span>
+                                    {% elif record.attendance_type == 'teacher' %}
+                                        <span class="badge bg-info">Teacher</span>
                                     {% else %}
                                         <span class="badge bg-dark">{{ record.attendance_type|title }}</span>
                                     {% endif %}

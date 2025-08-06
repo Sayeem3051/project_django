@@ -1,0 +1,411 @@
+{% extends 'base.html' %}
+
+{% block title %}Notification Dashboard - Attendance Management System{% endblock %}
+
+{% block content %}
+{% csrf_token %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <div>
+            <h1 class="h3 mb-0 text-gray-800">
+                <i class="fas fa-bell me-2"></i>Notification Dashboard
+            </h1>
+            <p class="text-muted mb-0">
+                <i class="fas fa-calendar me-1"></i>Current Date: {{ today|date:"l, F j, Y" }}
+                <span class="ms-3">
+                    <i class="fas fa-clock me-1"></i>Current Time: <span id="currentTime"></span>
+                </span>
+            </p>
+        </div>
+        <div class="d-flex">
+            <button class="btn btn-primary me-2" onclick="createDailySummary()">
+                <i class="fas fa-plus me-1"></i>Create Daily Summary
+            </button>
+            <button class="btn btn-success" onclick="sendNotifications()">
+                <i class="fas fa-paper-plane me-1"></i>Send Notifications
+            </button>
+        </div>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="row mb-4">
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-primary shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                                Total Students
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ stats.total_students }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-users fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-success shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                                Present Today
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ stats.present }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-check-circle fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-warning shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                                Late Today
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ stats.late }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-clock fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-danger shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-danger text-uppercase mb-1">
+                                Absent Today
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ stats.absent }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-times-circle fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Attendance Status Table -->
+        <div class="col-lg-8">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">
+                        <i class="fas fa-calendar-check me-2"></i>Today's Attendance Status ({{ today|date:"F j, Y" }})
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-bordered" id="attendanceTable">
+                            <thead>
+                                <tr>
+                                    <th>Student</th>
+                                    <th>Status</th>
+                                    <th>Check In</th>
+                                    <th>Check Out</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for attendance in attendance_data %}
+                                <tr>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <div class="avatar-sm me-3">
+                                                <i class="fas fa-user-circle fa-2x text-primary"></i>
+                                            </div>
+                                            <div>
+                                                <div class="font-weight-bold">{{ attendance.user.get_full_name|default:attendance.user.username }}</div>
+                                                <small class="text-muted">{{ attendance.user.email }}</small>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <span class="badge {% if attendance.status == 'present' %}badge-success{% elif attendance.status == 'absent' %}badge-danger{% elif attendance.status == 'late' %}badge-warning{% elif attendance.status == 'half_day' %}badge-info{% else %}badge-secondary{% endif %}">
+                                            {{ attendance.get_status_display }}
+                                        </span>
+                                    </td>
+                                    <td>{{ attendance.check_in_time|default:"--" }}</td>
+                                    <td>{{ attendance.check_out_time|default:"--" }}</td>
+                                    <td>
+                                        <select class="form-select form-select-sm status-select" 
+                                                data-user-id="{{ attendance.user.id }}"
+                                                data-current-status="{{ attendance.status }}">
+                                            <option value="present" {% if attendance.status == 'present' %}selected{% endif %}>Present</option>
+                                            <option value="absent" {% if attendance.status == 'absent' %}selected{% endif %}>Absent</option>
+                                            <option value="late" {% if attendance.status == 'late' %}selected{% endif %}>Late</option>
+                                            <option value="half_day" {% if attendance.status == 'half_day' %}selected{% endif %}>Half Day</option>
+                                            <option value="leave" {% if attendance.status == 'leave' %}selected{% endif %}>On Leave</option>
+                                        </select>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Notifications Panel -->
+        <div class="col-lg-4">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3 d-flex justify-content-between align-items-center">
+                    <h6 class="m-0 font-weight-bold text-primary">
+                        <i class="fas fa-bell me-2"></i>Recent Notifications
+                        {% if unread_count > 0 %}
+                        <span class="badge badge-danger ms-2">{{ unread_count }}</span>
+                        {% endif %}
+                    </h6>
+                    <button class="btn btn-sm btn-outline-primary" onclick="refreshNotifications()">
+                        <i class="fas fa-sync-alt"></i>
+                    </button>
+                </div>
+                <div class="card-body">
+                    <div id="notificationsList">
+                        {% for notification in recent_notifications %}
+                        <div class="notification-item mb-3 p-3 border rounded {% if not notification.is_read %}bg-light{% endif %}">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div class="flex-grow-1">
+                                    <h6 class="mb-1 {% if not notification.is_read %}font-weight-bold{% endif %}">
+                                        {{ notification.title }}
+                                    </h6>
+                                    <p class="mb-1 text-muted small">{{ notification.message|truncatewords:20 }}</p>
+                                    <small class="text-muted">
+                                        <i class="fas fa-calendar me-1"></i>{{ notification.date }}
+                                        <i class="fas fa-clock ms-2 me-1"></i>{{ notification.created_at|time:"H:i" }}
+                                        <i class="fas fa-calendar-day ms-2 me-1"></i>{{ today|date:"M j, Y" }}
+                                    </small>
+                                </div>
+                                <div class="ms-2">
+                                    <span class="badge {% if notification.notification_type == 'daily_summary' %}badge-primary{% elif notification.notification_type == 'absent_alert' %}badge-danger{% elif notification.notification_type == 'late_alert' %}badge-warning{% else %}badge-secondary{% endif %}">
+                                        {{ notification.get_notification_type_display }}
+                                    </span>
+                                    {% if not notification.is_read %}
+                                    <button class="btn btn-sm btn-outline-primary ms-1" 
+                                            onclick="markAsRead('{{ notification.id }}')">
+                                        <i class="fas fa-check"></i>
+                                    </button>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        {% empty %}
+                        <div class="text-center text-muted py-4">
+                            <i class="fas fa-bell-slash fa-3x mb-3"></i>
+                            <p>No notifications yet</p>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Create Notification Modal -->
+<div class="modal fade" id="createNotificationModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Create Notification</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="notificationForm">
+                    <div class="mb-3">
+                        <label class="form-label">Notification Type</label>
+                        <select class="form-select" name="type" id="notificationType">
+                            <option value="daily_summary">Daily Summary</option>
+                            <option value="absent_alert">Absent Alert</option>
+                            <option value="late_alert">Late Alert</option>
+                            <option value="system_alert">System Alert</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Custom Message</label>
+                        <textarea class="form-control" name="message" rows="4" placeholder="Enter custom message (optional)"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="submitNotification()">Create</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% block extra_js %}
+<script>
+    // Handle status changes
+    document.querySelectorAll('.status-select').forEach(select => {
+        select.addEventListener('change', function() {
+            const userId = this.dataset.userId;
+            const status = this.value;
+            const currentStatus = this.dataset.currentStatus;
+            
+            if (status !== currentStatus) {
+                updateAttendanceStatus(userId, status);
+            }
+        });
+    });
+
+    function updateAttendanceStatus(userId, status) {
+        fetch('{% url "attendance:mark_attendance_status" %}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            },
+            body: `user_id=${userId}&status=${status}`
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showAlert('success', data.message);
+                // Update the data attribute
+                const select = document.querySelector(`[data-user-id="${userId}"]`);
+                select.dataset.currentStatus = status;
+            } else {
+                showAlert('error', data.error);
+            }
+        })
+        .catch(error => {
+            showAlert('error', 'Error updating attendance status');
+        });
+    }
+
+    function createDailySummary() {
+        const modal = new bootstrap.Modal(document.getElementById('createNotificationModal'));
+        modal.show();
+    }
+
+    function submitNotification() {
+        const form = document.getElementById('notificationForm');
+        const formData = new FormData(form);
+        
+        fetch('{% url "attendance:create_daily_notification" %}', {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            },
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showAlert('success', data.message);
+                bootstrap.Modal.getInstance(document.getElementById('createNotificationModal')).hide();
+                refreshNotifications();
+            } else {
+                showAlert('error', data.error);
+            }
+        })
+        .catch(error => {
+            showAlert('error', 'Error creating notification');
+        });
+    }
+
+    function sendNotifications() {
+        // Send notifications for absent and late students
+        fetch('{% url "attendance:create_daily_notification" %}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            },
+            body: 'type=absent_alert'
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showAlert('success', 'Notifications sent successfully');
+                refreshNotifications();
+            }
+        });
+    }
+
+    function markAsRead(notificationId) {
+        fetch(`{% url "attendance:mark_notification_read" 0 %}`.replace('0', notificationId.toString()), {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                refreshNotifications();
+            }
+        });
+    }
+
+    function refreshNotifications() {
+        location.reload();
+    }
+
+    function showAlert(type, message) {
+        const alertClass = type === 'success' ? 'alert-success' : 'alert-danger';
+        const alertHtml = `
+            <div class="alert ${alertClass} alert-dismissible fade show" role="alert">
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        `;
+        
+        const alertContainer = document.createElement('div');
+        alertContainer.style.position = 'fixed';
+        alertContainer.style.top = '20px';
+        alertContainer.style.right = '20px';
+        alertContainer.style.zIndex = '9999';
+        alertContainer.innerHTML = alertHtml;
+        
+        document.body.appendChild(alertContainer);
+        
+        setTimeout(() => {
+            alertContainer.remove();
+        }, 5000);
+    }
+
+    // Update current time
+    function updateCurrentTime() {
+        const now = new Date();
+        const timeString = now.toLocaleTimeString('en-US', {
+            hour12: false,
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit'
+        });
+        document.getElementById('currentTime').textContent = timeString;
+    }
+
+    // Update time every second
+    updateCurrentTime();
+    setInterval(updateCurrentTime, 1000);
+
+    // Auto-refresh every 5 minutes
+    setInterval(() => {
+        refreshNotifications();
+    }, 300000);
+</script>
+{% endblock %}
+{% endblock %} 

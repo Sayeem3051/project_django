@@ -4,10 +4,10 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from django.utils import timezone
 from django.http import JsonResponse, HttpResponse
-from django.db.models import Q
-from .models import Attendance, AttendanceLog
+from django.db.models import Q, Count
+from .models import Attendance, AttendanceLog, DailyAttendanceNotification, AttendanceStatus
 from .forms import AttendanceForm, ManualAttendanceForm, DateRangeForm
-import datetime
+from datetime import date, timedelta, datetime
 import csv
 
 @login_required
@@ -33,7 +33,7 @@ def mark_attendance(request):
     attendance, created = Attendance.objects.get_or_create(
         user=request.user,
         date=today,
-        defaults={'check_in_time': now, 'attendance_type': 'manual'}
+        defaults={'check_in_time': now, 'attendance_type': 'student'}
     )
     
     if request.method == 'POST':
@@ -169,15 +169,15 @@ def attendance_history(request):
     """View attendance history"""
     # Default to current month
     today = timezone.now().date()
-    start_date = datetime.date(today.year, today.month, 1)
-    end_date = (datetime.date(today.year, today.month + 1, 1) 
+    start_date = date(today.year, today.month, 1)
+    end_date = (date(today.year, today.month + 1, 1) 
                 if today.month < 12 
-                else datetime.date(today.year + 1, 1, 1)) - datetime.timedelta(days=1)
+                else date(today.year + 1, 1, 1)) - timedelta(days=1)
     
-    # Get employees list for staff users
-    employees = None
+    # Get students list for staff users
+    students = None
     if request.user.is_staff:
-        employees = User.objects.filter(is_active=True).order_by('username')
+        students = User.objects.filter(is_active=True).order_by('username')
     
     # Process GET parameters for filtering
     if request.method == 'GET':
@@ -226,7 +226,7 @@ def attendance_history(request):
         'form': form,
         'attendance_records': attendance_records,
         'start_date': start_date,
-        'employees': employees,
+        'students': students,
         'end_date': end_date,
     }
     
@@ -239,12 +239,12 @@ def attendance_report(request):
         messages.error(request, 'You do not have permission to access this page.')
         return redirect('users:dashboard')
     
-    # Get employees list for staff users
-    employees = User.objects.filter(is_active=True).order_by('username')
+    # Get students list for staff users
+    students = User.objects.filter(is_active=True).order_by('username')
     
     # Default to current month
     today = timezone.now().date()
-    start_date = datetime.date(today.year, today.month, 1)
+    start_date = date(today.year, today.month, 1)
     end_date = today
     
     preview = False
@@ -369,7 +369,7 @@ def attendance_report(request):
         'summary_data': summary_data,
         'preview': preview,
         'download_url': download_url,
-        'employees': employees,
+        'students': students,
         'start_date': start_date,
         'end_date': end_date,
     }
@@ -460,3 +460,155 @@ def test_camera(request):
 def debug_camera(request):
     """Debug camera functionality"""
     return render(request, 'attendance/debug_camera.html')
+
+@login_required
+def notification_dashboard(request):
+    """Admin notification dashboard showing daily attendance status"""
+    if not request.user.is_staff:
+        messages.error(request, 'Access denied. Admin privileges required.')
+        return redirect('dashboard')
+    
+    today = date.today()
+    
+    # Get today's attendance status
+    today_attendance = AttendanceStatus.objects.filter(date=today)
+    
+    # Get all users and their attendance status
+    all_students = User.objects.filter(is_active=True).exclude(is_superuser=True)
+    
+    # Create attendance status for students who don't have one for today
+    for student in all_students:
+        AttendanceStatus.objects.get_or_create(
+            user=student,
+            date=today,
+            defaults={'status': 'absent'}
+        )
+    
+    # Get updated attendance data
+    attendance_data = AttendanceStatus.objects.filter(date=today).select_related('user')
+    
+    # Count statistics
+    stats = {
+        'total_students': all_students.count(),
+        'present': attendance_data.filter(status='present').count(),
+        'absent': attendance_data.filter(status='absent').count(),
+        'late': attendance_data.filter(status='late').count(),
+        'half_day': attendance_data.filter(status='half_day').count(),
+        'on_leave': attendance_data.filter(status='leave').count(),
+    }
+    
+    # Get recent notifications
+    recent_notifications = DailyAttendanceNotification.objects.filter(
+        date__gte=today - timedelta(days=7)
+    ).order_by('-created_at')[:10]
+    
+    # Get unread notifications count
+    unread_count = DailyAttendanceNotification.objects.filter(is_read=False).count()
+    
+    context = {
+        'today': today,
+        'attendance_data': attendance_data,
+        'stats': stats,
+        'recent_notifications': recent_notifications,
+        'unread_count': unread_count,
+    }
+    
+    return render(request, 'attendance/notification_dashboard.html', context)
+
+@login_required
+def mark_attendance_status(request):
+    """Mark attendance status for employees"""
+    if not request.user.is_staff:
+        return JsonResponse({'error': 'Access denied'}, status=403)
+    
+    if request.method == 'POST':
+        user_id = request.POST.get('user_id')
+        status = request.POST.get('status')
+        date_str = request.POST.get('date', date.today().isoformat())
+        
+        try:
+            user = User.objects.get(id=user_id)
+            attendance_date = datetime.strptime(date_str, '%Y-%m-%d').date()
+            
+            attendance_status, created = AttendanceStatus.objects.get_or_create(
+                user=user,
+                date=attendance_date,
+                defaults={'status': status}
+            )
+            
+            if not created:
+                attendance_status.status = status
+                attendance_status.save()
+            
+            return JsonResponse({
+                'success': True,
+                'message': f'Attendance status updated for {user.username}'
+            })
+            
+        except User.DoesNotExist:
+            return JsonResponse({'error': 'User not found'}, status=404)
+        except Exception as e:
+            return JsonResponse({'error': str(e)}, status=500)
+    
+    return JsonResponse({'error': 'Invalid request'}, status=400)
+
+@login_required
+def create_daily_notification(request):
+    """Create daily notification summary"""
+    if not request.user.is_staff:
+        return JsonResponse({'error': 'Access denied'}, status=403)
+    
+    if request.method == 'POST':
+        notification_type = request.POST.get('type', 'daily_summary')
+        custom_message = request.POST.get('message', '')
+        
+        today = date.today()
+        
+        if notification_type == 'daily_summary':
+            stats = {
+                'present': AttendanceStatus.objects.filter(date=today, status='present').count(),
+                'absent': AttendanceStatus.objects.filter(date=today, status='absent').count(),
+                'late': AttendanceStatus.objects.filter(date=today, status='late').count(),
+            }
+            
+            message = f"""
+            Daily Attendance Summary for {today}:
+            
+            ✅ Present: {stats['present']} students
+            ❌ Absent: {stats['absent']} students
+            ⏰ Late: {stats['late']} students
+            
+            Total Students: {sum(stats.values())}
+            """
+        else:
+            message = custom_message
+        
+        notification = DailyAttendanceNotification.objects.create(
+            date=today,
+            notification_type=notification_type,
+            title=f'Daily Summary - {today}',
+            message=message
+        )
+        
+        return JsonResponse({
+            'success': True,
+            'message': 'Notification created successfully',
+            'notification_id': notification.id
+        })
+    
+    return JsonResponse({'error': 'Invalid request'}, status=400)
+
+@login_required
+def mark_notification_read(request, notification_id):
+    """Mark notification as read"""
+    if not request.user.is_staff:
+        return JsonResponse({'error': 'Access denied'}, status=403)
+    
+    try:
+        notification = DailyAttendanceNotification.objects.get(id=notification_id)
+        notification.is_read = True
+        notification.save()
+        
+        return JsonResponse({'success': True})
+    except DailyAttendanceNotification.DoesNotExist:
+        return JsonResponse({'error': 'Notification not found'}, status=404)
